@@ -2,7 +2,7 @@
   "name": "clearmed-backend",
   "version": "5.0.0",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only --exit-child src/index.ts",
+    "dev": "ts-node-dev src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
