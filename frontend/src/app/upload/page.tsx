@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Upload, FileText, Image as ImageIcon, X, CheckCircle, AlertCircle, Loader2, Shield, Info } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { billsAPI, treatmentsAPI, hospitalsAPI, Treatment, Hospital } from '@/lib/api';
