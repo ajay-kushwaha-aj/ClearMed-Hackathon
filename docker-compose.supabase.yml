@@ -1,0 +1,71 @@
+# Use this file instead of docker-compose.yml when using Supabase
+# Run with: docker-compose -f docker-compose.supabase.yml up --build
+
+services:
+
+  redis:
+    image: redis:7-alpine
+    container_name: clearmed-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: on-failure
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: clearmed-backend-img
+    container_name: clearmed-backend
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      # PASTE YOUR SUPABASE CONNECTION STRING HERE
+      DATABASE_URL: "postgresql://postgres.tmhlgpkwnwdaesdyfiqx:Aj%407510066167@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true"
+      REDIS_URL: redis://redis:6379
+      PORT: 4000
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:3000
+      JWT_SECRET: clearmed_dev_secret_change_in_production_xxxxxxxxxxxxxxxxxx
+      MAX_FILE_SIZE_MB: 10
+      ANTHROPIC_API_KEY: ""
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: noreply@clearmed.in
+      LOG_LEVEL: info
+      MIN_BILLS_FOR_RELIABLE_SCORE: "5"
+      PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING: "1"
+    ports:
+      - "4000:4000"
+    volumes:
+      - uploads_data:/app/uploads
+    restart: on-failure
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: clearmed-frontend-img
+    container_name: clearmed-frontend
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+      NODE_ENV: development
+    ports:
+      - "3000:3000"
+    restart: on-failure
+
+volumes:
+  redis_data:
+  uploads_data:
