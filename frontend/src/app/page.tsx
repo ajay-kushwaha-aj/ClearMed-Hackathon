@@ -35,7 +35,7 @@ export default function HomePage() {
       <Navbar transparent />
 
       {/* ── Hero ── */}
-      <section className="hero-gradient min-h-[85vh] sm:min-h-[90vh] flex flex-col items-center justify-center px-4 text-center relative overflow-hidden pt-16 pb-20 sm:pb-8">
+      <section className="hero-gradient min-h-[75vh] sm:min-h-[80vh] flex flex-col items-center justify-center px-4 text-center relative pt-16 pb-16 sm:pb-20">
         <div className="absolute inset-0 opacity-[0.06]" style={{backgroundImage:'radial-gradient(circle,white 1px,transparent 1px)',backgroundSize:'28px 28px'}}/>
         <div className="relative max-w-3xl mx-auto w-full">
           <div className="inline-flex items-center gap-2 badge bg-white/15 text-white border border-white/20 mb-5 text-xs sm:text-sm">
@@ -63,15 +63,17 @@ export default function HomePage() {
       </section>
 
       {/* ── Stats strip ── */}
-      <div className="max-w-3xl mx-auto px-4 -mt-6 relative z-10 pb-2">
-        <div className="grid grid-cols-4 gap-2">
-          {STATS.map(s => (
-            <div key={s.label} className="glass-card p-3 text-center">
-              <p className="text-lg leading-none mb-0.5">{s.emoji}</p>
-              <p className="text-lg sm:text-2xl font-black text-white">{s.value}</p>
-              <p className="text-white/60 text-[10px] sm:text-xs">{s.label}</p>
-            </div>
-          ))}
+      <div className="bg-white border-b border-gray-100 py-4">
+        <div className="max-w-3xl mx-auto px-4">
+          <div className="grid grid-cols-4 gap-3">
+            {STATS.map(s => (
+              <div key={s.label} className="text-center">
+                <p className="text-2xl leading-none mb-1">{s.emoji}</p>
+                <p className="text-xl sm:text-2xl font-black text-brand-700">{s.value}</p>
+                <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5">{s.label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
