@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Loader2, AlertCircle, Star, Award, Building2, Users, CheckCircle, X, Search } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -9,9 +9,19 @@ import { hospitalsAPI, Hospital, formatCurrency } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-interface ScoreData { overall: number; satisfaction?: number; doctorExp?: number; costEfficiency?: number; successRate?: number; recoveryTime?: number; isReliable: boolean; dataPoints: number }
+interface ScoreData {
+  overall: number;
+  satisfaction?: number;
+  doctorExp?: number;
+  costEfficiency?: number;
+  successRate?: number;
+  recoveryTime?: number;
+  isReliable: boolean;
+  dataPoints: number;
+}
 
-export default function ComparePage() {
+// ─── ALL YOUR ORIGINAL LOGIC MOVED INTO THIS INNER COMPONENT ──────────────────
+function CompareContent() {
   const sp = useSearchParams();
   const ids = sp.get('ids')?.split(',').filter(Boolean) || [];
   const treatmentSlug = sp.get('treatment') || '';
@@ -26,7 +36,6 @@ export default function ComparePage() {
     hospitalsAPI.compare(ids, treatmentSlug || undefined)
       .then(async (r) => {
         setHospitals(r.data);
-        // Fetch scores for each hospital+treatment
         if (treatmentSlug) {
           const scoreMap: Record<string, ScoreData> = {};
           for (const h of r.data) {
@@ -86,12 +95,12 @@ export default function ComparePage() {
   const buildRadar = (h: Hospital): { label: string; value: number; max: number }[] => {
     const s = scores[h.id];
     return [
-      { label: 'Rating',   value: h.rating||0, max: 5 },
-      { label: 'Doctors',  value: Math.min(h._count?.doctors||0, 50), max: 50 },
-      { label: 'Satisfaction', value: s?.satisfaction||0, max: 2.5 },
-      { label: 'Cost Eff', value: s?.costEfficiency||0, max: 2.0 },
-      { label: 'Success',  value: s?.successRate||0, max: 2.0 },
-      { label: 'Recovery', value: s?.recoveryTime||0, max: 1.0 },
+      { label: 'Rating',       value: h.rating||0,              max: 5   },
+      { label: 'Doctors',      value: Math.min(h._count?.doctors||0, 50), max: 50  },
+      { label: 'Satisfaction', value: s?.satisfaction||0,        max: 2.5 },
+      { label: 'Cost Eff',     value: s?.costEfficiency||0,      max: 2.0 },
+      { label: 'Success',      value: s?.successRate||0,         max: 2.0 },
+      { label: 'Recovery',     value: s?.recoveryTime||0,        max: 1.0 },
     ];
   };
 
@@ -179,5 +188,23 @@ export default function ComparePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── VERCEL FIX: Suspense wrapper required for useSearchParams() ───────────────
+export default function ComparePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 text-brand-500 animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">Loading comparison...</p>
+          </div>
+        </div>
+      }
+    >
+      <CompareContent />
+    </Suspense>
   );
 }
