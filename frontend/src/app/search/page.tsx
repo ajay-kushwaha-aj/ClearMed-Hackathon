@@ -1,6 +1,5 @@
 'use client';
-export const dynamic = 'force-dynamic';
-import { Suspense, useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SlidersHorizontal, X, ChevronDown, Loader2, Building2, AlertCircle, GitCompare } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -17,8 +16,15 @@ const SORT_OPTIONS = [
   { value: 'name', label: 'Name A–Z' },
 ];
 
-// ─── ALL SEARCH LOGIC IN INNER COMPONENT (useSearchParams lives here) ─────────
-function SearchContent() {
+export default function SearchPageWrapper() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50"><Navbar /><div className="flex items-center justify-center pt-32"><Loader2 className="w-8 h-8 text-brand-500 animate-spin" /></div></div>}>
+      <SearchPageInner />
+    </Suspense>
+  );
+}
+
+function SearchPageInner() {
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -27,6 +33,7 @@ function SearchContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Filter state
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     treatment: sp.get('treatment') || '',
@@ -40,6 +47,7 @@ function SearchContent() {
     page: 1,
   });
 
+  // Compare selection
   const [compareIds, setCompareIds] = useState<string[]>([]);
 
   const fetchHospitals = useCallback(async () => {
@@ -69,6 +77,7 @@ function SearchContent() {
 
   useEffect(() => { fetchHospitals(); }, [fetchHospitals]);
 
+  // Sync filters to URL
   useEffect(() => {
     const params = new URLSearchParams();
     if (filters.treatment) params.set('treatment', filters.treatment);
@@ -160,6 +169,7 @@ function SearchContent() {
         {showFilters && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {/* Type */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">Hospital Type</label>
                 <select value={filters.type} onChange={e => setFilter('type', e.target.value)}
@@ -170,16 +180,19 @@ function SearchContent() {
                   <option value="CHARITABLE">Charitable</option>
                 </select>
               </div>
+              {/* Min cost */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">Min Cost (₹)</label>
                 <input type="number" value={filters.minCost} onChange={e => setFilter('minCost', e.target.value)}
                   placeholder="e.g. 50000" className="input h-9 text-sm" />
               </div>
+              {/* Max cost */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">Max Cost (₹)</label>
                 <input type="number" value={filters.maxCost} onChange={e => setFilter('maxCost', e.target.value)}
                   placeholder="e.g. 300000" className="input h-9 text-sm" />
               </div>
+              {/* NABH */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">Accreditation</label>
                 <select value={filters.nabh} onChange={e => setFilter('nabh', e.target.value)}
@@ -248,23 +261,5 @@ function SearchContent() {
         </div>
       )}
     </div>
-  );
-}
-
-// ─── VERCEL FIX: Suspense wrapper required for useSearchParams() ───────────────
-export default function SearchPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-8 h-8 text-brand-500 animate-spin mx-auto mb-3" />
-            <p className="text-gray-500 text-sm">Loading search...</p>
-          </div>
-        </div>
-      }
-    >
-      <SearchContent />
-    </Suspense>
   );
 }

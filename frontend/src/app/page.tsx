@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, Shield, TrendingDown, ArrowRight, Upload, Stethoscope, Trophy, TrendingUp, BarChart3, MapPin, Building2, IndianRupee } from 'lucide-react';
+import { Search, Shield, TrendingDown, ArrowRight, Upload, Stethoscope, Trophy, TrendingUp, BarChart3, MapPin, Building2, IndianRupee, Heart, FileText, Globe } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
 
@@ -23,10 +23,10 @@ const TOP_TREATMENTS = [
 ];
 
 const STATS = [
-  { emoji:'🏥', value:'28+',  label:'Hospitals' },
-  { emoji:'💊', value:'29',   label:'Treatments' },
-  { emoji:'🧾', value:'200+', label:'Verified Bills' },
-  { emoji:'🌆', value:'3',    label:'Cities' },
+  { icon: <Building2 className="w-7 h-7 text-blue-600"/>, value:'28+', label:'Hospitals', bg:'bg-blue-50', border:'border-blue-100' },
+  { icon: <Heart className="w-7 h-7 text-rose-500"/>,     value:'29',  label:'Treatments', bg:'bg-rose-50', border:'border-rose-100' },
+  { icon: <FileText className="w-7 h-7 text-emerald-600"/>, value:'200+', label:'Verified Bills', bg:'bg-emerald-50', border:'border-emerald-100' },
+  { icon: <Globe className="w-7 h-7 text-purple-600"/>,   value:'3',   label:'Cities', bg:'bg-purple-50', border:'border-purple-100' },
 ];
 
 export default function HomePage() {
@@ -35,116 +35,120 @@ export default function HomePage() {
       <Navbar transparent />
 
       {/* ── Hero ── */}
-      <section className="hero-gradient min-h-[75vh] sm:min-h-[80vh] flex flex-col items-center justify-center px-4 text-center relative pt-16 pb-16 sm:pb-20">
+      <section className="hero-gradient min-h-[80vh] sm:min-h-[85vh] flex flex-col items-center justify-center px-4 text-center relative pt-20 pb-20 sm:pb-24">
         <div className="absolute inset-0 opacity-[0.06]" style={{backgroundImage:'radial-gradient(circle,white 1px,transparent 1px)',backgroundSize:'28px 28px'}}/>
-        <div className="relative max-w-3xl mx-auto w-full">
-          <div className="inline-flex items-center gap-2 badge bg-white/15 text-white border border-white/20 mb-5 text-xs sm:text-sm">
+        <div className="relative max-w-4xl mx-auto w-full">
+          <div className="inline-flex items-center gap-2 badge bg-white/15 text-white border border-white/20 mb-6 text-sm">
             <span className="text-yellow-300">★</span> Trusted by patients in Delhi, Mumbai & Bengaluru
           </div>
-          <h1 className="text-3xl sm:text-5xl font-bold text-white leading-tight mb-4">
+          <h1 className="text-4xl sm:text-6xl font-bold text-white leading-tight mb-5">
             Know the real cost of<br/>
             <span className="text-teal-300">healthcare</span> before you pay
           </h1>
-          <p className="text-white/75 text-base sm:text-xl mb-8 max-w-xl mx-auto">
+          <p className="text-white/80 text-lg sm:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
             Compare verified hospital costs. Check insurance coverage. Earn points for contributing your bill.
           </p>
-          <SearchBar />
 
-          {/* CTA buttons — stacked on mobile */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-6">
-            <Link href="/symptoms" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center">
+          {/* Solid white search box */}
+          <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-2xl max-w-3xl mx-auto">
+            <SearchBar />
+          </div>
+
+          {/* CTA buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+            <Link href="/symptoms" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base">
               <Stethoscope className="w-5 h-5"/> Check Symptoms
             </Link>
-            <Link href="/insurance" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center">
+            <Link href="/insurance" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base">
               <Shield className="w-5 h-5"/> Find Cashless Hospitals
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── Stats strip ── */}
-      <div className="bg-white border-b border-gray-100 py-4">
-        <div className="max-w-3xl mx-auto px-4">
-          <div className="grid grid-cols-4 gap-3">
+      {/* ── Stats Cards ── */}
+      <section className="px-4 -mt-10 relative z-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {STATS.map(s => (
-              <div key={s.label} className="text-center">
-                <p className="text-2xl leading-none mb-1">{s.emoji}</p>
-                <p className="text-xl sm:text-2xl font-black text-brand-700">{s.value}</p>
-                <p className="text-gray-400 text-[10px] sm:text-xs mt-0.5">{s.label}</p>
+              <div key={s.label} className={`${s.bg} ${s.border} border-2 rounded-2xl p-5 sm:p-6 text-center shadow-lg hover:shadow-xl transition-shadow`}>
+                <div className="flex items-center justify-center mb-3">{s.icon}</div>
+                <p className="text-3xl sm:text-4xl font-black text-gray-900">{s.value}</p>
+                <p className="text-gray-600 text-sm sm:text-base font-semibold mt-1">{s.label}</p>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Mobile quick links grid ── */}
-      <section className="px-4 py-6 sm:py-8 max-w-4xl mx-auto">
-        <h2 className="text-base font-bold text-gray-700 mb-3">Quick Access</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+      {/* ── Quick Access ── */}
+      <section className="px-4 py-10 sm:py-12 max-w-6xl mx-auto">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-5">Quick Access</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {MOBILE_QUICK_LINKS.map(link => (
             <Link key={link.href} href={link.href}
-              className={`${link.color} rounded-2xl p-3 text-center flex flex-col items-center gap-1.5 hover:opacity-80 transition-all active:scale-95`}>
-              <span className="text-2xl leading-none">{link.icon}</span>
-              <span className="text-xs font-semibold leading-tight">{link.label}</span>
+              className={`${link.color} rounded-2xl p-4 text-center flex flex-col items-center gap-2 hover:opacity-80 transition-all active:scale-95 shadow-sm`}>
+              <span className="text-3xl leading-none">{link.icon}</span>
+              <span className="text-sm font-semibold leading-tight">{link.label}</span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* ── Phase 5 Feature cards ── */}
-      <section className="px-4 pb-6 max-w-4xl mx-auto">
-        <div className="grid sm:grid-cols-2 gap-3">
+      {/* ── Feature cards ── */}
+      <section className="px-4 pb-8 max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-2 gap-5">
           {/* Insurance card */}
-          <div className="card p-5 bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-100">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center shrink-0">
-                <Shield className="w-5 h-5 text-teal-600"/>
+          <div className="card p-6 sm:p-7 bg-gradient-to-br from-teal-50 to-emerald-50 border-teal-100 border-2">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center shrink-0">
+                <Shield className="w-6 h-6 text-teal-600"/>
               </div>
               <div>
-                <p className="font-bold text-teal-900 text-sm">Insurance Coverage Estimator</p>
-                <p className="text-xs text-teal-700 mt-0.5">See exactly how much your policy covers</p>
+                <p className="font-bold text-teal-900 text-lg">Insurance Coverage Estimator</p>
+                <p className="text-sm text-teal-700 mt-1">See exactly how much your policy covers</p>
               </div>
             </div>
-            <p className="text-xs text-teal-700 leading-relaxed mb-3">
+            <p className="text-sm text-teal-700 leading-relaxed mb-4">
               Support for Star Health, HDFC Ergo, Niva Bupa, Care Health, and 6 more insurers. Find cashless hospitals near you.
             </p>
-            <Link href="/insurance" className="btn bg-teal-600 hover:bg-teal-700 text-white btn-sm w-full justify-center text-xs">
-              Check My Coverage <ArrowRight className="w-3.5 h-3.5"/>
+            <Link href="/insurance" className="btn bg-teal-600 hover:bg-teal-700 text-white btn-md w-full justify-center text-sm font-bold">
+              Check My Coverage <ArrowRight className="w-4 h-4"/>
             </Link>
           </div>
 
           {/* Partner card */}
-          <div className="card p-5 bg-gradient-to-br from-brand-50 to-blue-50 border-brand-100">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="w-10 h-10 bg-brand-100 rounded-xl flex items-center justify-center shrink-0">
-                <Building2 className="w-5 h-5 text-brand-600"/>
+          <div className="card p-6 sm:p-7 bg-gradient-to-br from-brand-50 to-blue-50 border-brand-100 border-2">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 bg-brand-100 rounded-xl flex items-center justify-center shrink-0">
+                <Building2 className="w-6 h-6 text-brand-600"/>
               </div>
               <div>
-                <p className="font-bold text-brand-900 text-sm">Hospital Partner Program</p>
-                <p className="text-xs text-brand-700 mt-0.5">Get verified. Receive patient leads.</p>
+                <p className="font-bold text-brand-900 text-lg">Hospital Partner Program</p>
+                <p className="text-sm text-brand-700 mt-1">Get verified. Receive patient leads.</p>
               </div>
             </div>
-            <p className="text-xs text-brand-700 leading-relaxed mb-3">
+            <p className="text-sm text-brand-700 leading-relaxed mb-4">
               Free listing + Verified badge. Pro plan includes sponsored placement and direct patient enquiry routing.
             </p>
-            <Link href="/partner" className="btn btn-primary btn-sm w-full justify-center text-xs">
-              List Your Hospital <ArrowRight className="w-3.5 h-3.5"/>
+            <Link href="/partner" className="btn btn-primary btn-md w-full justify-center text-sm font-bold">
+              List Your Hospital <ArrowRight className="w-4 h-4"/>
             </Link>
           </div>
         </div>
       </section>
 
       {/* ── AI Symptom CTA ── */}
-      <section className="px-4 pb-6 max-w-4xl mx-auto">
-        <div className="bg-gradient-to-br from-teal-700 via-brand-700 to-brand-800 rounded-3xl p-6 sm:p-8 text-white text-center relative overflow-hidden">
+      <section className="px-4 pb-8 max-w-6xl mx-auto">
+        <div className="bg-gradient-to-br from-teal-700 via-brand-700 to-brand-800 rounded-3xl p-8 sm:p-12 text-white text-center relative overflow-hidden">
           <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle,white 1px,transparent 1px)',backgroundSize:'20px 20px'}}/>
           <div className="relative">
-            <span className="badge bg-teal-400/20 text-teal-200 border border-teal-400/30 mb-3 text-xs">✨ AI-Powered</span>
-            <h2 className="text-xl sm:text-2xl font-bold mb-2">Don't know your treatment?</h2>
-            <p className="text-white/75 text-sm sm:text-base mb-5 max-w-sm mx-auto">
+            <span className="badge bg-teal-400/20 text-teal-200 border border-teal-400/30 mb-4 text-sm">✨ AI-Powered</span>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-3">Don't know your treatment?</h2>
+            <p className="text-white/80 text-base sm:text-lg mb-7 max-w-lg mx-auto leading-relaxed">
               Describe symptoms in plain language. Claude AI maps them to conditions, specialists, and treatment costs.
             </p>
-            <Link href="/symptoms" className="btn bg-white text-brand-700 hover:bg-teal-50 btn-lg font-bold w-full sm:w-auto justify-center">
+            <Link href="/symptoms" className="btn bg-white text-brand-700 hover:bg-teal-50 btn-lg font-bold w-full sm:w-auto justify-center text-base">
               <Stethoscope className="w-5 h-5"/> Analyze My Symptoms
             </Link>
           </div>
@@ -152,37 +156,38 @@ export default function HomePage() {
       </section>
 
       {/* ── Popular treatments ── */}
-      <section className="px-4 pb-6 max-w-4xl mx-auto">
-        <h2 className="text-base font-bold text-gray-700 mb-3">Popular Treatment Cost Pages</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+      <section className="px-4 pb-8 max-w-6xl mx-auto">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-5">Popular Treatment Cost Pages</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {TOP_TREATMENTS.map(t => (
             <Link key={t.slug} href={`/treatments/${t.slug}?city=${t.city}`}
-              className="card p-3 hover:border-brand-200 hover:shadow-md transition-all active:scale-[0.97] flex items-center gap-2.5 group">
-              <span className="text-2xl leading-none">{t.icon}</span>
+              className="card p-4 sm:p-5 hover:border-brand-200 hover:shadow-lg transition-all active:scale-[0.97] flex items-center gap-3 group">
+              <span className="text-3xl sm:text-4xl leading-none">{t.icon}</span>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-xs leading-tight group-hover:text-brand-600 line-clamp-1">{t.name}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{t.city} · {t.range}</p>
+                <p className="font-bold text-gray-900 text-sm sm:text-base leading-tight group-hover:text-brand-600 line-clamp-1">{t.name}</p>
+                <p className="text-xs sm:text-sm text-gray-400 mt-1">{t.city} · {t.range}</p>
               </div>
+              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-brand-500 shrink-0"/>
             </Link>
           ))}
         </div>
       </section>
 
       {/* ── How it works ── */}
-      <section className="bg-white py-10 px-4 border-t border-gray-100">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-xl font-bold text-gray-900 text-center mb-6">How ClearMed works</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <section className="bg-white py-12 sm:py-16 px-4 border-t border-gray-100">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-10">How ClearMed works</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
             {[
               { step:'01', icon:'🔍', title:'Search', desc:'Find hospitals by treatment or describe your symptoms' },
               { step:'02', icon:'💰', title:'Compare Costs', desc:'See real costs from verified patient bills' },
               { step:'03', icon:'🛡️', title:'Check Insurance', desc:'Find cashless hospitals and estimate coverage' },
               { step:'04', icon:'⭐', title:'Contribute', desc:'Upload your bill, earn points, help the next patient' },
             ].map(s => (
-              <div key={s.step} className="text-center">
-                <div className="w-11 h-11 bg-brand-600 text-white rounded-2xl flex items-center justify-center text-xl font-black mx-auto mb-2">{s.icon}</div>
-                <p className="font-bold text-gray-900 text-xs mb-1">{s.title}</p>
-                <p className="text-[11px] text-gray-500 leading-relaxed">{s.desc}</p>
+              <div key={s.step} className="text-center p-4">
+                <div className="w-14 h-14 bg-brand-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto mb-4">{s.icon}</div>
+                <p className="font-bold text-gray-900 text-base sm:text-lg mb-2">{s.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -190,15 +195,15 @@ export default function HomePage() {
       </section>
 
       {/* ── Gamification CTA ── */}
-      <section className="hero-gradient py-10 px-4 text-center">
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-3">Help make healthcare transparent in India</h2>
-          <p className="text-white/70 text-sm mb-6">Every bill you contribute helps thousands of patients. Earn ClearMed Points, unlock badges, climb the leaderboard.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/upload" className="btn bg-white text-brand-700 hover:bg-brand-50 btn-lg font-bold w-full sm:w-auto justify-center">
+      <section className="hero-gradient py-12 sm:py-16 px-4 text-center">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Help make healthcare transparent in India</h2>
+          <p className="text-white/75 text-base sm:text-lg mb-8 leading-relaxed">Every bill you contribute helps thousands of patients. Earn ClearMed Points, unlock badges, climb the leaderboard.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/upload" className="btn bg-white text-brand-700 hover:bg-brand-50 btn-lg font-bold w-full sm:w-auto justify-center text-base">
               <Upload className="w-5 h-5"/> Upload Your Bill
             </Link>
-            <Link href="/leaderboard" className="btn border-2 border-white/40 text-white hover:bg-white/10 btn-lg w-full sm:w-auto justify-center">
+            <Link href="/leaderboard" className="btn border-2 border-white/40 text-white hover:bg-white/10 btn-lg w-full sm:w-auto justify-center text-base">
               <Trophy className="w-5 h-5"/> See Leaderboard
             </Link>
           </div>
@@ -206,9 +211,9 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 py-8 px-4 pb-24 lg:pb-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-8">
+      <footer className="bg-gray-900 py-10 px-4 pb-24 lg:pb-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
             {[
               { title:'Platform', links:[{label:'Find Hospitals',href:'/search'},{label:'Symptom Analyzer',href:'/symptoms'},{label:'Cost Intelligence',href:'/dashboard'},{label:'Upload Bill',href:'/upload'}] },
               { title:'Insurance', links:[{label:'Cashless Hospitals',href:'/insurance'},{label:'Coverage Estimator',href:'/insurance'},{label:'Find Insurers',href:'/insurance'}] },
@@ -216,18 +221,18 @@ export default function HomePage() {
               { title:'Legal', links:[{label:'Privacy Policy',href:'/privacy'},{label:'Terms of Service',href:'/terms'},{label:'Contact',href:'mailto:hello@clearmed.in'}] },
             ].map(col => (
               <div key={col.title}>
-                <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-3">{col.title}</p>
-                <div className="space-y-2">
+                <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">{col.title}</p>
+                <div className="space-y-3">
                   {col.links.map(l => (
-                    <Link key={l.label} href={l.href} className="block text-gray-500 hover:text-gray-300 text-xs transition-colors">{l.label}</Link>
+                    <Link key={l.label} href={l.href} className="block text-gray-500 hover:text-gray-300 text-sm transition-colors">{l.label}</Link>
                   ))}
                 </div>
               </div>
             ))}
           </div>
           <div className="border-t border-gray-800 pt-6 text-center">
-            <p className="text-gray-500 text-xs">© 2025 ClearMed Health Technologies Pvt. Ltd.</p>
-            <p className="text-gray-600 text-xs mt-1.5">Medical disclaimer: ClearMed does not provide medical diagnosis or advice. Always consult a qualified doctor.</p>
+            <p className="text-gray-500 text-sm">© 2026 ClearMed Health Technologies Pvt. Ltd.</p>
+            <p className="text-gray-600 text-sm mt-2">Medical disclaimer: ClearMed does not provide medical diagnosis or advice. Always consult a qualified doctor.</p>
           </div>
         </div>
       </footer>

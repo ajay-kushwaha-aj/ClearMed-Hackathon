@@ -105,7 +105,7 @@ export default function SearchBar({
   }
 
   return (
-    <div ref={wrapperRef} className="w-full max-w-2xl mx-auto relative z-10">
+    <div ref={wrapperRef} className="w-full max-w-3xl mx-auto relative z-10">
 
       {/* Search row */}
       <div className="flex flex-col sm:flex-row gap-2 items-stretch">
@@ -113,18 +113,18 @@ export default function SearchBar({
         {/* Treatment input */}
         <div className="relative flex-1">
           {loading
-            ? <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60 animate-spin" />
-            : <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/60" />}
+            ? <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 animate-spin" />
+            : <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />}
           <input
             ref={inputRef} type="text" value={query}
             onChange={e => { setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
             onKeyDown={e => { if (e.key === 'Enter' && query) go(query); if (e.key === 'Escape') setOpen(false); }}
             placeholder="Search treatment, surgery, condition..."
-            className="w-full h-14 pl-12 pr-10 rounded-2xl border-2 border-white/20 bg-white/10 backdrop-blur-sm text-white placeholder:text-white/50 focus:border-white/60 focus:bg-white/20 focus:outline-none text-base transition-all"
+            className="w-full h-14 pl-12 pr-10 rounded-2xl border-2 border-gray-200 bg-gray-50 text-gray-800 placeholder:text-gray-400 focus:border-brand-400 focus:bg-white focus:outline-none text-base transition-all"
             autoComplete="off" />
           {query && (
-            <button onClick={() => { setQuery(''); setResults([]); }} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/50 hover:text-white">
+            <button onClick={() => { setQuery(''); setResults([]); }} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -133,19 +133,19 @@ export default function SearchBar({
         {/* City selector */}
         <div className="relative sm:w-36">
           <select value={city} onChange={e => setCity(e.target.value)}
-            className="w-full h-14 pl-4 pr-9 rounded-2xl border-2 border-white/20 bg-white/10 backdrop-blur-sm text-white focus:border-white/60 focus:outline-none text-sm font-medium cursor-pointer appearance-none"
+            className="w-full h-14 pl-4 pr-9 rounded-2xl border-2 border-gray-200 bg-gray-50 text-gray-700 focus:border-brand-400 focus:outline-none text-sm font-medium cursor-pointer appearance-none"
             style={{ WebkitAppearance: 'none' }}>
             {CITIES.map(c => (
-              <option key={c} value={c} style={{ color: '#1f2937', background: '#ffffff' }}>{c}</option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
 
         {/* Search button */}
         <button
           onClick={() => query ? go(query) : router.push(`/search?city=${city}`)}
-          className="h-14 px-7 bg-white text-brand-700 font-bold rounded-2xl hover:bg-brand-50 active:scale-95 transition-all shadow-lg text-sm whitespace-nowrap">
+          className="h-14 px-7 bg-brand-600 text-white font-bold rounded-2xl hover:bg-brand-700 active:scale-95 transition-all shadow-md text-base whitespace-nowrap">
           Search
         </button>
       </div>
