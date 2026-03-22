@@ -7,7 +7,7 @@ export const metadata = {
   description: 'ClearMed Privacy Policy. How we collect, use, and protect your personal data under the Digital Personal Data Protection Act 2023.',
 };
 
-const LAST_UPDATED = '1 January 2025';
+const LAST_UPDATED = '1 January 2026';
 
 export default function PrivacyPage() {
   return (

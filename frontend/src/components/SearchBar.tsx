@@ -14,9 +14,11 @@ const CITIES = ['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad'];
 export default function SearchBar({
   size = 'lg',
   defaultValue = '',
+  onSearch,
 }: {
   size?: 'lg' | 'md';
   defaultValue?: string;
+  onSearch?: (query: string, city: string) => void;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState(defaultValue);
@@ -51,7 +53,11 @@ export default function SearchBar({
 
   const go = (q: string, c = city) => {
     setOpen(false);
-    router.push(`/search?treatment=${encodeURIComponent(q)}&city=${encodeURIComponent(c)}`);
+    if (onSearch) {
+      onSearch(q, c);
+    } else {
+      router.push(`/search?treatment=${encodeURIComponent(q)}&city=${encodeURIComponent(c)}`);
+    }
   };
 
   if (size === 'md') {
@@ -65,7 +71,7 @@ export default function SearchBar({
             onChange={e => { setQuery(e.target.value); setOpen(true); }}
             onFocus={() => setOpen(true)}
             onKeyDown={e => { if (e.key === 'Enter' && query) go(query); if (e.key === 'Escape') setOpen(false); }}
-            placeholder="Search treatment..."
+            placeholder="Search treatment or hospital name..."
             className="w-full h-10 pl-10 pr-8 rounded-xl border border-gray-200 bg-white placeholder:text-gray-400 focus:border-brand-400 focus:outline-none text-sm"
             autoComplete="off" />
           {query && (
@@ -88,6 +94,12 @@ export default function SearchBar({
           className="h-10 px-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 focus:border-brand-400 focus:outline-none w-28 cursor-pointer">
           {CITIES.map(c => <option key={c}>{c}</option>)}
         </select>
+        <button
+          onClick={() => go(query)}
+          className="h-10 px-4 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 active:scale-95 transition-all text-sm whitespace-nowrap flex items-center gap-1.5 shrink-0"
+        >
+          <Search className="w-4 h-4" /> Search
+        </button>
       </div>
     );
   }

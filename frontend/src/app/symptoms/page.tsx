@@ -1,18 +1,40 @@
 'use client';
 import { useState } from 'react';
-import { Stethoscope, Search, AlertTriangle, AlertCircle, Clock, CheckCircle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { Stethoscope, Search, AlertTriangle, AlertCircle, Clock, CheckCircle, ArrowRight, Loader2, Sparkles, ChevronDown, ChevronUp, ClipboardList, Building2, MapPin, Star, IndianRupee, Info } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
+interface Condition {
+  name: string;
+  likelihood: 'high' | 'moderate' | 'low';
+  matchConfidence: number;
+  icdCode?: string;
+  description: string;
+  prerequisites: string[];
+  recoveryTime: string;
+  department: string;
+}
+
+interface HospitalMatch {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  rating: number | null;
+  imageUrl: string | null;
+  doctors: Array<{ name: string; specialization: string }>;
+}
+
 interface SymptomResult {
-  conditions: Array<{ name: string; likelihood: 'high' | 'moderate' | 'low'; icdCode?: string }>;
+  conditions: Condition[];
   specialists: string[];
   treatments: string[];
   urgency: 'emergency' | 'urgent' | 'routine' | 'elective';
   disclaimer: string;
   searchQuery: string;
+  hospitalsByDepartment?: Record<string, HospitalMatch[]>;
 }
 
 const URGENCY: Record<string, { icon: React.ReactNode; label: string; sub: string; bg: string; border: string; text: string }> = {
@@ -31,11 +53,11 @@ const EXAMPLES = [
   'Kidney stone-like back pain',
 ];
 
-const LIKELIHOOD_STYLE: Record<string, string> = {
-  high: 'bg-red-100 text-red-700 border-red-200',
-  moderate: 'bg-amber-100 text-amber-700 border-amber-200',
-  low: 'bg-gray-100 text-gray-600 border-gray-200',
-};
+const CONFIDENCE_COLOR = (c: number) =>
+  c >= 75 ? 'text-emerald-600' : c >= 40 ? 'text-blue-600' : 'text-gray-500';
+
+const BORDER_COLOR = (l: string) =>
+  l === 'high' ? 'border-l-blue-500' : l === 'moderate' ? 'border-l-amber-400' : 'border-l-gray-300';
 
 export default function SymptomAnalyzerPage() {
   const [query, setQuery] = useState('');
@@ -43,10 +65,11 @@ export default function SymptomAnalyzerPage() {
   const [result, setResult] = useState<SymptomResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
   const analyze = async (q = query) => {
     if (q.trim().length < 3) return;
-    setLoading(true); setError(''); setResult(null);
+    setLoading(true); setError(''); setResult(null); setExpandedIdx(null);
     try {
       const res = await fetch(`${API}/symptoms/analyze`, {
         method: 'POST',
@@ -59,6 +82,15 @@ export default function SymptomAnalyzerPage() {
     } catch {
       setError('Could not connect to server. Make sure the backend is running.');
     } finally { setLoading(false); }
+  };
+
+  const toggleExpand = (idx: number) => {
+    setExpandedIdx(prev => prev === idx ? null : idx);
+  };
+
+  const getHospitalsForDept = (dept: string): HospitalMatch[] => {
+    if (!result?.hospitalsByDepartment) return [];
+    return result.hospitalsByDepartment[dept] || [];
   };
 
   const urgencyConfig = result ? (URGENCY[result.urgency] || URGENCY.routine) : null;
@@ -82,24 +114,28 @@ export default function SymptomAnalyzerPage() {
             </p>
 
             {/* Input */}
-            <div className="bg-white rounded-2xl p-4 shadow-xl">
+            <div className="bg-white rounded-2xl p-5 shadow-xl text-left">
               <textarea
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analyze(); }}}
-                placeholder="e.g. I have severe knee pain when walking stairs, especially in the morning. It has been going on for 2 months..."
+                placeholder="Describe your symptoms or doctor's recommendation..."
                 rows={3}
                 className="w-full resize-none text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none leading-relaxed"
               />
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                <select value={city} onChange={e => setCity(e.target.value)}
-                  className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer">
-                  {['Delhi','Mumbai','Bengaluru','Chennai','Hyderabad'].map(c=><option key={c}>{c}</option>)}
-                </select>
+                <div className="flex items-center gap-2">
+                  <select value={city} onChange={e => setCity(e.target.value)}
+                    className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer">
+                    {['Delhi','Mumbai','Bengaluru','Chennai','Hyderabad','Kolkata','Pune','Jaipur','Lucknow','Ahmedabad'].map(c=><option key={c}>{c}</option>)}
+                  </select>
+                  <span className="text-xs text-gray-400 hidden sm:inline-flex items-center gap-1"><Info className="w-3 h-3"/> Use plain English or medical terms.</span>
+                </div>
                 <button onClick={() => analyze()} disabled={loading || query.length < 3}
-                  className="btn btn-primary btn-sm">
+                  className="btn btn-primary btn-sm px-5">
                   {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Search className="w-4 h-4"/>}
                   {loading ? 'Analyzing...' : 'Analyze'}
+                  {!loading && <ArrowRight className="w-3.5 h-3.5 ml-0.5"/>}
                 </button>
               </div>
             </div>
@@ -124,9 +160,19 @@ export default function SymptomAnalyzerPage() {
 
           {/* Loading skeleton */}
           {loading && (
-            <div className="card p-6 space-y-3">
-              {[80, 60, 90, 50].map((w, i) => (
-                <div key={i} className={`h-4 bg-gray-100 rounded-full animate-pulse`} style={{width:`${w}%`}} />
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm animate-pulse">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="space-y-2 flex-1">
+                      <div className="h-5 bg-gray-100 rounded w-48"></div>
+                      <div className="h-3 bg-gray-50 rounded w-72"></div>
+                    </div>
+                    <div className="h-10 w-16 bg-gray-100 rounded"></div>
+                  </div>
+                  <div className="h-3 bg-gray-50 rounded w-full mt-4"></div>
+                  <div className="h-3 bg-gray-50 rounded w-3/4 mt-2"></div>
+                </div>
               ))}
             </div>
           )}
@@ -139,7 +185,7 @@ export default function SymptomAnalyzerPage() {
           )}
 
           {result && urgencyConfig && (
-            <div className="space-y-4 animate-fade-in">
+            <div className="space-y-5 animate-fade-in">
               {/* Urgency banner */}
               <div className={`rounded-2xl p-4 border-2 ${urgencyConfig.bg} ${urgencyConfig.border}`}>
                 <div className={`flex items-center gap-3 ${urgencyConfig.text}`}>
@@ -151,31 +197,148 @@ export default function SymptomAnalyzerPage() {
                 </div>
               </div>
 
-              {/* Conditions */}
-              <div className="card p-5">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-                  <Stethoscope className="w-4 h-4 text-brand-500"/> Possible Conditions
-                </h3>
-                <div className="space-y-2">
-                  {result.conditions.map((c, i) => (
-                    <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{c.name}</p>
-                        {c.icdCode && <p className="text-xs text-gray-400">ICD: {c.icdCode}</p>}
-                      </div>
-                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${LIKELIHOOD_STYLE[c.likelihood]}`}>
-                        {c.likelihood.charAt(0).toUpperCase() + c.likelihood.slice(1)}
-                      </span>
+              {/* Analysis Results Header */}
+              <h2 className="text-lg font-bold text-gray-800">Analysis Results</h2>
+
+              {/* Condition Cards */}
+              <div className="space-y-4">
+                {result.conditions.map((c, idx) => {
+                  const isExpanded = expandedIdx === idx;
+                  const hospitals = getHospitalsForDept(c.department);
+                  return (
+                    <div key={idx} className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden border-l-4 ${BORDER_COLOR(c.likelihood)} transition-all duration-300`}>
+                      {/* Card Header — clickable */}
+                      <button
+                        onClick={() => toggleExpand(idx)}
+                        className="w-full text-left px-5 py-4 hover:bg-gray-50/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2.5 flex-wrap">
+                              <h3 className="text-base font-bold text-gray-900">{c.name}</h3>
+                              {c.icdCode && (
+                                <span className="text-[10px] font-mono font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">
+                                  ICD {c.icdCode}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{c.description}</p>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="text-right">
+                              <p className="text-[11px] text-gray-400 font-medium">Match Confidence</p>
+                              <p className={`text-xl font-bold ${CONFIDENCE_COLOR(c.matchConfidence)}`}>
+                                {c.matchConfidence}%
+                              </p>
+                            </div>
+                            {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400"/> : <ChevronDown className="w-5 h-5 text-gray-400"/>}
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Expanded Details */}
+                      {isExpanded && (
+                        <div className="px-5 pb-5 space-y-4 border-t border-gray-100 pt-4 animate-fade-in">
+                          <div className="grid sm:grid-cols-2 gap-4">
+                            {/* Prerequisites */}
+                            {c.prerequisites && c.prerequisites.length > 0 && (
+                              <div className="bg-gray-50 rounded-xl p-4">
+                                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                  <ClipboardList className="w-3.5 h-3.5 text-blue-500"/> Common Prerequisites
+                                </h4>
+                                <ul className="space-y-1.5">
+                                  {c.prerequisites.map((p, j) => (
+                                    <li key={j} className="text-sm text-gray-600 flex items-start gap-2">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0"></span>
+                                      {p}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Recovery Time */}
+                            <div className="bg-gray-50 rounded-xl p-4">
+                              <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-emerald-500"/> Expected Recovery Time
+                              </h4>
+                              <p className="text-sm text-gray-600 leading-relaxed">{c.recoveryTime}</p>
+                            </div>
+                          </div>
+
+                          {/* Department & Specialist */}
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-xs font-semibold text-white bg-blue-600 px-3 py-1 rounded-full">
+                              {c.department}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              Likelihood: <span className={`font-bold ${c.likelihood === 'high' ? 'text-red-600' : c.likelihood === 'moderate' ? 'text-amber-600' : 'text-gray-500'}`}>
+                                {c.likelihood === 'high' ? 'High' : c.likelihood === 'moderate' ? 'Medium' : 'Low'}
+                              </span>
+                            </span>
+                          </div>
+
+                          {/* Find Hospitals Button */}
+                          <div className="pt-2 border-t border-gray-100">
+                            {hospitals.length > 0 ? (
+                              <div>
+                                <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                  <Building2 className="w-4 h-4 text-brand-600"/> Hospitals in {city} for {c.department}
+                                </h4>
+                                <div className="grid gap-3">
+                                  {hospitals.map(h => (
+                                    <div key={h.id} className="flex gap-3 bg-white border border-gray-100 hover:border-blue-200 transition-colors p-3.5 rounded-xl items-start shadow-sm hover:shadow-md">
+                                      <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
+                                        {h.imageUrl ? <img src={h.imageUrl} alt={h.name} className="w-full h-full object-cover"/> : <Building2 className="w-6 h-6 text-blue-400"/>}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h5 className="font-semibold text-sm text-gray-800 line-clamp-1">{h.name}</h5>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                          <span className="text-xs text-yellow-600 font-semibold flex items-center gap-0.5">
+                                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500"/> {h.rating?.toFixed(1) || '4.5'}
+                                          </span>
+                                          <span className="text-xs text-gray-400 flex items-center gap-0.5">
+                                            <MapPin className="w-3 h-3"/> {h.city}
+                                          </span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{h.address}</p>
+                                        {h.doctors && h.doctors.length > 0 && (
+                                          <p className="text-[11px] text-blue-600 mt-1">
+                                            {h.doctors.length} specialist{h.doctors.length > 1 ? 's' : ''} available
+                                          </p>
+                                        )}
+                                      </div>
+                                      <Link
+                                        href={`/hospitals/${h.id}`}
+                                        className="text-xs font-semibold text-blue-600 hover:text-blue-800 shrink-0 self-center flex items-center gap-1"
+                                      >
+                                        View <ArrowRight className="w-3 h-3"/>
+                                      </Link>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : (
+                              <Link
+                                href={`/search?treatment=${encodeURIComponent(c.name)}&city=${city}`}
+                                className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 border border-blue-200 hover:bg-blue-50 px-4 py-2.5 rounded-xl transition-all"
+                              >
+                                <Building2 className="w-4 h-4"/> Find Hospitals for this Condition
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
 
               {/* Specialists */}
               {result.specialists.length > 0 && (
                 <div className="card p-5">
                   <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
-                    See a Specialist
+                    Recommended Specialists
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {result.specialists.map(s => (
@@ -197,7 +360,7 @@ export default function SymptomAnalyzerPage() {
                         <span className="text-sm text-gray-700">{t}</span>
                         <Link href={`/search?treatment=${encodeURIComponent(t)}&city=${city}`}
                           className="text-xs text-brand-600 font-medium hover:underline flex items-center gap-1">
-                          Find hospitals <ArrowRight className="w-3 h-3"/>
+                          Compare costs <ArrowRight className="w-3 h-3"/>
                         </Link>
                       </div>
                     ))}
@@ -205,7 +368,7 @@ export default function SymptomAnalyzerPage() {
                   {result.searchQuery && (
                     <Link href={`/search?treatment=${encodeURIComponent(result.searchQuery)}&city=${city}`}
                       className="btn btn-primary btn-md w-full text-sm">
-                      <Search className="w-4 h-4"/> Find Hospitals in {city}
+                      <IndianRupee className="w-4 h-4"/> Compare Treatment Costs in {city}
                     </Link>
                   )}
                 </div>

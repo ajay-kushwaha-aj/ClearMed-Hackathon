@@ -24,7 +24,7 @@ async function runTesseract(filePath: string): Promise<{ text: string; confidenc
     // Dynamic import to avoid issues if tesseract not installed
     const { createWorker } = await import('tesseract.js');
     const worker = await createWorker('eng');
-    
+
     const { data } = await worker.recognize(filePath);
     await worker.terminate();
 
@@ -170,8 +170,8 @@ export async function processOcrInBackground(
     // Mark as processing
     await prisma.ocrResult.upsert({
       where: { billId },
-      update: { status: 'OCR_PROCESSING' },
-      create: { billId, status: 'OCR_PROCESSING' },
+      update: { status: 'PROCESSING' },
+      create: { billId, status: 'PROCESSING' },
     });
 
     const ocrOutput = await processImageWithOcr(filePath);
@@ -181,7 +181,7 @@ export async function processOcrInBackground(
       where: { billId },
       data: {
         status,
-        rawText: ocrOutput.rawText.slice(0, 10000), // Limit storage
+        // rawText: ocrOutput.rawText.slice(0, 10000), // Limit storage
         extractedData: ocrOutput.extractedData as object,
         confidence: ocrOutput.confidence,
         piiRemoved: ocrOutput.piiFieldsFound.length > 0,
@@ -223,6 +223,6 @@ export async function processOcrInBackground(
         status: 'FAILED',
         errorMessage: (err as Error).message,
       },
-    }).catch(() => {});
+    }).catch(() => { });
   }
 }

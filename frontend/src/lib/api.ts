@@ -15,7 +15,7 @@ async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> 
 // ─── Types ────────────────────────────────────────────────────────────────
 export interface Hospital {
   id: string; name: string; slug: string; city: string; state: string;
-  address: string; phone?: string; type: 'GOVERNMENT'|'PRIVATE'|'TRUST'|'CHARITABLE';
+  address: string; phone?: string; website?: string; type: 'GOVERNMENT' | 'PRIVATE' | 'TRUST' | 'CHARITABLE';
   beds?: number; naabhStatus: boolean; rating?: number; lat?: number; lng?: number;
   description?: string; established?: number;
   doctors: Doctor[];
@@ -48,10 +48,17 @@ export interface CostSummary {
 }
 
 export interface ClearMedScoreData {
-  overall: number; satisfaction?: number; doctorExp?: number;
-  costEfficiency?: number; successRate?: number; recoveryTime?: number;
-  naabhBonus?: number; dataPoints: number; isReliable: boolean;
+  overallScore: number;
+  satisfactionScore?: number;
+  doctorScore?: number;
+  costEfficiencyScore?: number;
+  successRateScore?: number;
+  recoveryScore?: number;
+  naabhBonus: number;
+  dataPoints: number;
+  isReliable: boolean;
   label?: string;
+  lastCalculated: string;
 }
 
 export interface FeedbackItem {
@@ -60,9 +67,9 @@ export interface FeedbackItem {
 }
 
 export interface SymptomResult {
-  conditions: Array<{ name: string; likelihood: 'high'|'moderate'|'low'; icdCode?: string }>;
+  conditions: Array<{ name: string; likelihood: 'high' | 'moderate' | 'low'; icdCode?: string }>;
   specialists: string[]; treatments: string[];
-  urgency: 'emergency'|'urgent'|'routine'|'elective';
+  urgency: 'emergency' | 'urgent' | 'routine' | 'elective';
   disclaimer: string; searchQuery: string;
 }
 
@@ -73,22 +80,22 @@ export interface PaginatedResponse<T> {
 
 // ─── Hospital API ─────────────────────────────────────────────────────────
 export interface HospitalFilters {
-  treatment?: string; city?: string; type?: string;
+  treatment?: string; search?: string; city?: string; type?: string;
   minCost?: number; maxCost?: number; nabh?: boolean;
   page?: number; limit?: number;
-  sort?: 'rating'|'cost_asc'|'cost_desc'|'name';
+  sort?: 'rating' | 'cost_asc' | 'cost_desc' | 'name';
 }
 
 export const hospitalsAPI = {
   list: (f: HospitalFilters = {}) => {
     const p = new URLSearchParams();
-    Object.entries(f).forEach(([k,v]) => { if (v !== undefined && v !== null && v !== '') p.set(k, String(v)); });
+    Object.entries(f).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== '') p.set(k, String(v)); });
     return fetchAPI<PaginatedResponse<Hospital>>(`/hospitals?${p}`);
   },
   get: (id: string) => fetchAPI<{ data: Hospital & { billStats: unknown[] } }>(`/hospitals/${id}`),
   getDoctors: (id: string) => fetchAPI<{ data: Doctor[] }>(`/hospitals/${id}/doctors`),
   compare: (ids: string[], treatmentSlug?: string) =>
-    fetchAPI<{ data: Hospital[] }>(`/hospitals/compare`, { method:'POST', body: JSON.stringify({ ids, treatmentSlug }) }),
+    fetchAPI<{ data: Hospital[] }>(`/hospitals/compare`, { method: 'POST', body: JSON.stringify({ ids, treatmentSlug }) }),
 };
 
 // ─── Treatment API ────────────────────────────────────────────────────────
@@ -101,7 +108,7 @@ export const treatmentsAPI = {
 // ─── Costs API ────────────────────────────────────────────────────────────
 export const costsAPI = {
   get: (treatmentId: string, city: string) =>
-    fetchAPI<{ data: { treatment: Treatment; city: string; costs: Record<string, number|string> } }>(
+    fetchAPI<{ data: { treatment: Treatment; city: string; costs: Record<string, number | string> } }>(
       `/costs/${treatmentId}/${encodeURIComponent(city)}`
     ),
 };
@@ -140,12 +147,12 @@ export const statsAPI = {
 // ─── Utilities ────────────────────────────────────────────────────────────
 export function formatCurrency(amount: number): string {
   if (!amount) return '—';
-  if (amount >= 100000) return `₹${(amount/100000).toFixed(1)}L`;
-  if (amount >= 1000) return `₹${(amount/1000).toFixed(0)}K`;
+  if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
+  if (amount >= 1000) return `₹${(amount / 1000).toFixed(0)}K`;
   return `₹${amount.toLocaleString('en-IN')}`;
 }
 
 export function formatCurrencyFull(amount: number): string {
   if (!amount) return '—';
-  return new Intl.NumberFormat('en-IN', { style:'currency', currency:'INR', maximumFractionDigits:0 }).format(amount);
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
 }

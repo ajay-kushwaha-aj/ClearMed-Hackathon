@@ -13,7 +13,7 @@ router.get('/analytics', requireAdmin, async (req: Request, res: Response, next:
   try {
     const now = new Date();
     const last30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const last7  = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const last7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const [
       totalBills, newBills7d, newBills30d,
@@ -40,8 +40,8 @@ router.get('/analytics', requireAdmin, async (req: Request, res: Response, next:
       prisma.patientFeedback.count(),
       prisma.patientFeedback.count({ where: { createdAt: { gte: last7 } } }),
       prisma.symptomQuery.count({ where: { createdAt: { gte: last7 } } }),
-      prisma.abuseReport.count({ where: { status: 'REPORT_OPEN' } }),
-      prisma.erasureRequest.count({ where: { status: 'BILL_PENDING' } }),
+      prisma.abuseReport.count({ where: { status: 'OPEN' } }),
+      prisma.erasureRequest.count({ where: { status: 'PENDING' } }),
       prisma.bill.groupBy({ by: ['city'], _count: { id: true }, orderBy: { _count: { id: 'desc' } }, take: 6 }),
       prisma.bill.groupBy({ by: ['status'], _count: { id: true } }),
       prisma.bill.groupBy({ by: ['treatmentId'], _count: { id: true }, orderBy: { _count: { id: 'desc' } }, take: 5 }),
@@ -100,7 +100,7 @@ router.get('/abuse-reports', requireAdmin, async (req: Request, res: Response, n
 
 router.post('/abuse-reports/:id/resolve', requireAdmin, requireRole('SUPER_ADMIN', 'MODERATOR'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { resolution, status } = z.object({ resolution: z.string(), status: z.enum(['REPORT_RESOLVED','REPORT_DISMISSED']) }).parse(req.body);
+    const { resolution, status } = z.object({ resolution: z.string(), status: z.enum(['RESOLVED', 'DISMISSED']) }).parse(req.body);
     const report = await prisma.abuseReport.update({
       where: { id: req.params.id },
       data: { status: status as any, resolution, resolvedBy: req.admin!.adminId, resolvedAt: new Date() },
@@ -154,7 +154,7 @@ router.post('/import/hospitals', requireAdmin, requireRole('SUPER_ADMIN', 'MODER
         city: z.string(),
         state: z.string().optional().default(''),
         address: z.string(),
-        type: z.enum(['GOVERNMENT','PRIVATE','TRUST','CHARITABLE']).optional().default('PRIVATE'),
+        type: z.enum(['GOVERNMENT', 'PRIVATE', 'TRUST', 'CHARITABLE']).optional().default('PRIVATE'),
         beds: z.number().optional(),
         nabh: z.boolean().optional().default(false),
         phone: z.string().optional(),

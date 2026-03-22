@@ -229,7 +229,7 @@ async function main() {
           rating: d.rating,
           bio: d.bio
         }
-      }).catch(() => {}); // Skip duplicates
+      }).catch(() => { }); // Skip duplicates
     }
   }
   console.log(`✅ Created doctors`);
@@ -242,11 +242,11 @@ async function main() {
   const angioplasty = treatments.find(t => t.slug === 'angioplasty')!;
 
   const sampleBills = [
-    { hospitalId: apolloDelhi.id, treatmentId: kneeReplacement.id, city: 'Delhi', totalCost: 215000, roomCharges: 45000, implantCost: 85000, surgeryFee: 55000, pharmacyCost: 18000, otherCharges: 12000, stayDays: 5, status: 'VERIFIED' as const },
-    { hospitalId: apolloDelhi.id, treatmentId: kneeReplacement.id, city: 'Delhi', totalCost: 235000, roomCharges: 52000, implantCost: 92000, surgeryFee: 58000, pharmacyCost: 20000, otherCharges: 13000, stayDays: 6, status: 'VERIFIED' as const },
-    { hospitalId: apolloDelhi.id, treatmentId: angioplasty.id, city: 'Delhi', totalCost: 275000, roomCharges: 40000, implantCost: 130000, surgeryFee: 65000, pharmacyCost: 22000, otherCharges: 18000, stayDays: 3, status: 'VERIFIED' as const },
-    { hospitalId: aiims.id, treatmentId: kneeReplacement.id, city: 'Delhi', totalCost: 62000, roomCharges: 15000, implantCost: 28000, surgeryFee: 12000, pharmacyCost: 5000, otherCharges: 2000, stayDays: 5, status: 'VERIFIED' as const },
-    { hospitalId: aiims.id, treatmentId: bypass.id, city: 'Delhi', totalCost: 115000, roomCharges: 28000, implantCost: 45000, surgeryFee: 25000, pharmacyCost: 12000, otherCharges: 5000, stayDays: 10, status: 'VERIFIED' as const },
+    { hospitalId: apolloDelhi.id, treatmentId: kneeReplacement.id, city: 'Delhi', totalCost: 215000, roomCharges: 45000, implantCost: 85000, surgeryFee: 55000, pharmacyCost: 18000, otherCharges: 12000, stayDays: 5, status: 'BILL_VERIFIED' as const },
+    { hospitalId: apolloDelhi.id, treatmentId: kneeReplacement.id, city: 'Delhi', totalCost: 235000, roomCharges: 52000, implantCost: 92000, surgeryFee: 58000, pharmacyCost: 20000, otherCharges: 13000, stayDays: 6, status: 'BILL_VERIFIED' as const },
+    { hospitalId: apolloDelhi.id, treatmentId: angioplasty.id, city: 'Delhi', totalCost: 275000, roomCharges: 40000, implantCost: 130000, surgeryFee: 65000, pharmacyCost: 22000, otherCharges: 18000, stayDays: 3, status: 'BILL_VERIFIED' as const },
+    { hospitalId: aiims.id, treatmentId: kneeReplacement.id, city: 'Delhi', totalCost: 62000, roomCharges: 15000, implantCost: 28000, surgeryFee: 12000, pharmacyCost: 5000, otherCharges: 2000, stayDays: 5, status: 'BILL_VERIFIED' as const },
+    { hospitalId: aiims.id, treatmentId: bypass.id, city: 'Delhi', totalCost: 115000, roomCharges: 28000, implantCost: 45000, surgeryFee: 25000, pharmacyCost: 12000, otherCharges: 5000, stayDays: 10, status: 'BILL_VERIFIED' as const },
   ];
 
   await prisma.bill.createMany({ data: sampleBills, skipDuplicates: true });

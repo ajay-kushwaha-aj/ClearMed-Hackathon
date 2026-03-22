@@ -17,8 +17,8 @@ const PLAN_FEES: Record<string, number> = {
 };
 
 const PLAN_FEATURES: Record<string, { slots: number; quota: number; label: string }> = {
-  FREE_TIER:  { slots: 0, quota: 0,    label: 'Free' },
-  PRO:        { slots: 3, quota: 500,  label: 'Pro' },
+  FREE_TIER: { slots: 0, quota: 0, label: 'Free' },
+  PRO: { slots: 3, quota: 500, label: 'Pro' },
   ENTERPRISE: { slots: 10, quota: 2000, label: 'Enterprise' },
 };
 
@@ -27,7 +27,7 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
   try {
     const schema = z.object({
       hospitalId: z.string(),
-      plan: z.enum(['FREE_TIER','PRO','ENTERPRISE']).default('FREE_TIER'),
+      plan: z.enum(['FREE_TIER', 'PRO', 'ENTERPRISE']).default('FREE_TIER'),
       contactName: z.string().min(2),
       contactEmail: z.string().email(),
       contactPhone: z.string().optional(),
@@ -50,7 +50,7 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
       data: {
         hospitalId: data.hospitalId,
         plan: data.plan as any,
-        status: data.plan === 'FREE_TIER' ? 'ACTIVE' : 'BILL_PENDING',
+        status: data.plan === 'FREE_TIER' ? 'ACTIVE' : 'PENDING',
         contactName: data.contactName,
         contactEmail: data.contactEmail,
         contactPhone: data.contactPhone,
@@ -98,7 +98,7 @@ router.get('/dashboard/:token', async (req: Request, res: Response, next: NextFu
       prisma.bill.count({ where: { hospitalId: partner.hospitalId, status: 'BILL_VERIFIED' } }),
     ]);
 
-    const newEnquiries = recentEnquiries.filter(e => e.status === 'ENQUIRY_NEW').length;
+    const newEnquiries = recentEnquiries.filter(e => e.status === 'NEW').length;
 
     res.json({
       data: {
@@ -157,7 +157,7 @@ router.post('/enquiry', async (req: Request, res: Response, next: NextFunction) 
 // ── Mark enquiry as contacted/converted ───────────────────────────────────
 router.patch('/enquiry/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status } = z.object({ status: z.enum(['ENQUIRY_CONTACTED','ENQUIRY_CONVERTED','ENQUIRY_CLOSED']) }).parse(req.body);
+    const { status } = z.object({ status: z.enum(['CONTACTED', 'CONVERTED', 'CLOSED']) }).parse(req.body);
     const { token } = req.query as { token: string };
 
     const partner = await prisma.hospitalPartner.findUnique({ where: { analyticsToken: token } });
@@ -165,14 +165,14 @@ router.patch('/enquiry/:id', async (req: Request, res: Response, next: NextFunct
 
     const enquiry = await prisma.patientEnquiry.update({
       where: { id: req.params.id, partnerId: partner.id },
-      data: { status: status as any, ...(status === 'ENQUIRY_CONTACTED' ? { respondedAt: new Date() } : {}) },
+      data: { status: status as any, ...(status === 'CONTACTED' ? { respondedAt: new Date() } : {}) },
     });
     res.json({ data: enquiry });
   } catch (err) { next(err); }
 });
 
 // ── Admin: approve/reject partner ─────────────────────────────────────────
-router.patch('/admin/:id/approve', requireAdmin, requireRole('SUPER_ADMIN','MODERATOR'), async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/admin/:id/approve', requireAdmin, requireRole('SUPER_ADMIN', 'MODERATOR'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const partner = await prisma.hospitalPartner.update({
       where: { id: req.params.id },

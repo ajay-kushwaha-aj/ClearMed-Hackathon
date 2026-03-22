@@ -1,0 +1,13 @@
+﻿src/lib/notifications.ts(117,14): error TS2322: Type '"NOTIF_PENDING"' is not assignable to type 'EnumNotifStatusFilter<"Notification"> | NotifStatus'.
+src/lib/ocr.ts(173,17): error TS2820: Type '"OCR_PROCESSING"' is not assignable to type 'EnumOcrStatusFieldUpdateOperationsInput | OcrStatus'. Did you mean '"PROCESSING"'?
+src/lib/ocr.ts(174,25): error TS2820: Type '"OCR_PROCESSING"' is not assignable to type 'OcrStatus'. Did you mean '"PROCESSING"'?
+src/lib/ocr.ts(184,9): error TS2353: Object literal may only specify known properties, and 'rawText' does not exist in type '(Without<OcrResultUpdateInput, OcrResultUncheckedUpdateInput> & OcrResultUncheckedUpdateInput) | (Without<...> & OcrResultUpdateInput)'.
+src/routes/adminOps.ts(43,43): error TS2322: Type '"REPORT_OPEN"' is not assignable to type 'EnumReportStatusFilter<"AbuseReport"> | ReportStatus'.
+src/routes/b2bApi.ts(36,51): error TS2322: Type '{ hashedKey: string; }' is not assignable to type 'ApiKeyWhereUniqueInput'.
+  Type '{ hashedKey: string; }' is not assignable to type '{ id: string; key: string; } & { id?: string; key?: string; AND?: ApiKeyWhereInput | ApiKeyWhereInput[]; OR?: ApiKeyWhereInput[]; NOT?: ApiKeyWhereInput | ApiKeyWhereInput[]; ... 11 more ...; usageLogs?: ApiUsageLogListRelationFilter; }'.
+    Type '{ hashedKey: string; }' is missing the following properties from type '{ id: string; key: string; }': id, key
+src/routes/intelligence.ts(99,28): error TS2345: Argument of type '{ where: { treatmentId: string; status: "BILL_VERIFIED"; hospital: { city: { contains: string; mode: "insensitive"; }; }; }; include: { hospital: { select: { type: true; }; }; }; select: { totalCost: true; roomCharges: true; ... 4 more ...; hospital: true; }; }' is not assignable to parameter of type 'SelectSubset<{ where: { treatmentId: string; status: "BILL_VERIFIED"; hospital: { city: { contains: string; mode: "insensitive"; }; }; }; include: { hospital: { select: { type: true; }; }; }; select: { totalCost: true; ... 5 more ...; hospital: true; }; }, BillFindManyArgs<...>>'.
+  Type '{ where: { treatmentId: string; status: "BILL_VERIFIED"; hospital: { city: { contains: string; mode: "insensitive"; }; }; }; include: { hospital: { select: { type: true; }; }; }; select: { totalCost: true; roomCharges: true; ... 4 more ...; hospital: true; }; }' is not assignable to type '"Please either choose `select` or `include`."'.
+src/routes/partners.ts(53,9): error TS2322: Type '"BILL_PENDING" | "ACTIVE"' is not assignable to type 'PartnerStatus'.
+  Type '"BILL_PENDING"' is not assignable to type 'PartnerStatus'.
+src/routes/partners.ts(101,54): error TS2367: This comparison appears to be unintentional because the types 'EnquiryStatus' and '"ENQUIRY_NEW"' have no overlap.

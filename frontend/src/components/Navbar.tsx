@@ -6,19 +6,19 @@ import Image from 'next/image';
 import { Menu, X, Heart, Search, Upload, Stethoscope, LayoutDashboard, Trophy, TrendingUp, Users, Shield, Building2, IndianRupee, LogIn, LogOut, UserCircle } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/search',    icon: <Search className="w-4 h-4"/>,      label: 'Find Hospitals' },
-  { href: '/symptoms',  icon: <Stethoscope className="w-4 h-4"/>, label: 'Symptoms' },
-  { href: '/insurance', icon: <Shield className="w-4 h-4"/>,      label: 'Insurance' },
-  { href: '/dashboard', icon: <TrendingUp className="w-4 h-4"/>,  label: 'Cost Trends' },
-  { href: '/community', icon: <Users className="w-4 h-4"/>,       label: 'Reviews' },
+  { href: '/search', icon: <Search className="w-4 h-4" />, label: 'Find Hospitals' },
+  { href: '/symptoms', icon: <Stethoscope className="w-4 h-4" />, label: 'Symptoms' },
+  { href: '/insurance', icon: <Shield className="w-4 h-4" />, label: 'Insurance' },
+  { href: '/dashboard', icon: <TrendingUp className="w-4 h-4" />, label: 'Cost Trends' },
+  { href: '/community', icon: <Users className="w-4 h-4" />, label: 'Reviews' },
 ];
 
 const MOBILE_NAV = [
-  { href: '/',          icon: <Heart className="w-5 h-5"/>,       label: 'Home' },
-  { href: '/search',    icon: <Search className="w-5 h-5"/>,      label: 'Search' },
-  { href: '/symptoms',  icon: <Stethoscope className="w-5 h-5"/>, label: 'Symptoms' },
-  { href: '/insurance', icon: <Shield className="w-5 h-5"/>,      label: 'Insurance' },
-  { href: '/upload',    icon: <Upload className="w-5 h-5"/>,      label: 'Upload' },
+  { href: '/', icon: <Heart className="w-5 h-5" />, label: 'Home' },
+  { href: '/search', icon: <Search className="w-5 h-5" />, label: 'Search' },
+  { href: '/symptoms', icon: <Stethoscope className="w-5 h-5" />, label: 'Symptoms' },
+  { href: '/insurance', icon: <Shield className="w-5 h-5" />, label: 'Insurance' },
+  { href: '/upload', icon: <Upload className="w-5 h-5" />, label: 'Upload' },
 ];
 
 export default function Navbar({ transparent = false }: { transparent?: boolean }) {
@@ -35,7 +35,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
     try {
       const stored = localStorage.getItem('clearmed_user');
       if (stored) setUser(JSON.parse(stored));
-    } catch {}
+    } catch { }
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
@@ -59,7 +59,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 shrink-0">
-              <Image src="/logo.png" alt="ClearMed" width={36} height={36} className="rounded-xl" />
+              <Image src="/logo.png" alt="ClearMed" width={44} height={44} className="rounded-xl" />
               <span className={`text-xl font-bold ${solid ? 'text-brand-800' : 'text-white'}`}>
                 Clear<span className={solid ? 'text-brand-500' : 'text-teal-300'}>Med</span>
               </span>
@@ -80,21 +80,21 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               {user ? (
                 <>
                   <Link href="/contribute" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${solid ? 'text-gray-600 hover:text-brand-700' : 'text-white/70 hover:text-white'}`}>
-                    <Trophy className="w-3.5 h-3.5"/>
+                    <Trophy className="w-3.5 h-3.5" />
                     <span className="text-brand-600 font-bold">{user.points || 0} pts</span>
                   </Link>
-                  <Link href="/contribute" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${solid ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
-                    <UserCircle className="w-4 h-4"/>
+                  <Link href="/profile" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${solid ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
+                    <UserCircle className="w-4 h-4" />
                     {user.name?.split(' ')[0]}
                   </Link>
                   <button onClick={handleLogout} className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${solid ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-white/50 hover:text-white'}`}>
-                    <LogOut className="w-3.5 h-3.5"/>
+                    <LogOut className="w-3.5 h-3.5" />
                   </button>
                 </>
               ) : (
                 <>
                   <Link href="/login" className={`btn btn-sm px-4 py-2 text-sm ${solid ? 'btn-secondary' : 'bg-white/15 hover:bg-white/25 text-white border border-white/30'}`}>
-                    <LogIn className="w-4 h-4"/> Sign In
+                    <LogIn className="w-4 h-4" /> Sign In
                   </Link>
                   <Link href="/signup" className="btn btn-primary btn-sm px-4 py-2 text-sm">
                     Get Started
@@ -106,7 +106,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
             {/* Mobile toggle */}
             <button onClick={() => setOpen(!open)}
               className={`lg:hidden p-2 rounded-xl transition-colors ${solid ? 'text-gray-600 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
-              {open ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
+              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
@@ -119,20 +119,20 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               {user ? (
                 <div className="flex items-center gap-3 px-3 py-3 mb-2 bg-brand-50 rounded-xl">
                   <div className="w-9 h-9 bg-brand-100 rounded-xl flex items-center justify-center">
-                    <UserCircle className="w-5 h-5 text-brand-600"/>
+                    <UserCircle className="w-5 h-5 text-brand-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                     <p className="text-xs text-brand-600 font-medium">{user.points || 0} ClearMed Points</p>
                   </div>
                   <button onClick={handleLogout} className="text-xs text-red-500 font-medium flex items-center gap-1">
-                    <LogOut className="w-3.5 h-3.5"/> Logout
+                    <LogOut className="w-3.5 h-3.5" /> Logout
                   </button>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <Link href="/login" onClick={() => setOpen(false)} className="btn btn-secondary btn-md justify-center text-sm">
-                    <LogIn className="w-4 h-4"/> Sign In
+                    <LogIn className="w-4 h-4" /> Sign In
                   </Link>
                   <Link href="/signup" onClick={() => setOpen(false)} className="btn btn-primary btn-md justify-center text-sm">
                     Get Started
@@ -141,12 +141,12 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               )}
               {/* Nav links */}
               {[...NAV_ITEMS,
-                { href:'/compare',     icon:<Shield className="w-4 h-4"/>,        label:'Compare Hospitals' },
-                { href:'/leaderboard', icon:<Trophy className="w-4 h-4"/>,         label:'Leaderboard' },
-                { href:'/partner',     icon:<Building2 className="w-4 h-4"/>,      label:'Partner Program' },
-                { href:'/pricing',     icon:<IndianRupee className="w-4 h-4"/>,    label:'Pricing' },
-                { href:'/upload',      icon:<Upload className="w-4 h-4"/>,         label:'Upload Bill' },
-                { href:'/admin/analytics', icon:<LayoutDashboard className="w-4 h-4"/>, label:'Admin' },
+              { href: '/compare', icon: <Shield className="w-4 h-4" />, label: 'Compare Hospitals' },
+              { href: '/leaderboard', icon: <Trophy className="w-4 h-4" />, label: 'Leaderboard' },
+              { href: '/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner Program' },
+              { href: '/pricing', icon: <IndianRupee className="w-4 h-4" />, label: 'Pricing' },
+              { href: '/upload', icon: <Upload className="w-4 h-4" />, label: 'Upload Bill' },
+              { href: '/admin/analytics', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Admin' },
               ].map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive(item.href) ? 'bg-brand-50 text-brand-700' : 'text-gray-700 hover:bg-gray-50'}`}>

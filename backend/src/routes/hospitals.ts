@@ -9,6 +9,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const schema = z.object({
       treatment: z.string().optional(),
+      search: z.string().optional(),
       city: z.string().optional(),
       type: z.enum(['GOVERNMENT', 'PRIVATE', 'TRUST', 'CHARITABLE']).optional(),
       minCost: z.coerce.number().optional(),
@@ -26,6 +27,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (params.city) where.city = { contains: params.city, mode: 'insensitive' };
     if (params.type) where.type = params.type;
     if (params.nabh !== undefined) where.naabhStatus = params.nabh === 'true';
+    if (params.search) where.name = { contains: params.search, mode: 'insensitive' };
 
     // Filter by treatment & cost
     if (params.treatment) {

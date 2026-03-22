@@ -29,6 +29,7 @@ export default function SearchPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     treatment: sp.get('treatment') || '',
+    search: sp.get('search') || '',
     city: sp.get('city') || 'Delhi',
     type: sp.get('type') || '',
     minCost: sp.get('minCost') || '',
@@ -47,6 +48,7 @@ export default function SearchPage() {
     try {
       const res = await hospitalsAPI.list({
         treatment: filters.treatment || undefined,
+        search: filters.search || undefined,
         city: filters.city || undefined,
         type: (filters.type as 'GOVERNMENT' | 'PRIVATE' | 'TRUST' | 'CHARITABLE') || undefined,
         minCost: filters.minCost ? Number(filters.minCost) : undefined,
@@ -71,6 +73,7 @@ export default function SearchPage() {
   useEffect(() => {
     const params = new URLSearchParams();
     if (filters.treatment) params.set('treatment', filters.treatment);
+    if (filters.search) params.set('search', filters.search);
     if (filters.city) params.set('city', filters.city);
     if (filters.type) params.set('type', filters.type);
     if (filters.sort !== 'rating') params.set('sort', filters.sort);
@@ -99,10 +102,16 @@ export default function SearchPage() {
       <div className="bg-brand-900 pt-20 pb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-white/60 text-sm mb-3">
-            {filters.treatment ? `Hospitals for "${filters.treatment}"` : 'All Hospitals'}
+            {filters.search ? `Searching "${filters.search}"` : filters.treatment ? `Hospitals for "${filters.treatment}"` : 'All Hospitals'}
             {filters.city ? ` in ${filters.city}` : ''}
           </p>
-          <SearchBar size="md" defaultValue={filters.treatment} />
+          <SearchBar
+            size="md"
+            defaultValue={filters.search || filters.treatment}
+            onSearch={(q, c) => {
+              setFilters(f => ({ ...f, search: q, city: c, page: 1 }));
+            }}
+          />
         </div>
       </div>
 
@@ -204,8 +213,12 @@ export default function SearchPage() {
           <div className="flex flex-col items-center justify-center py-24 gap-3 text-center">
             <Building2 className="w-12 h-12 text-gray-300" />
             <p className="text-gray-700 font-medium text-lg">No hospitals found</p>
-            <p className="text-gray-400 text-sm max-w-sm">Try a different treatment name, city, or clear your filters.</p>
-            <button onClick={clearFilters} className="btn btn-primary btn-sm mt-2">Clear all filters</button>
+            <p className="text-gray-400 text-sm max-w-sm">
+              {filters.search
+                ? <>No hospitals matching <strong>"{filters.search}"</strong> found{filters.city ? ` in ${filters.city}` : ''}. Please check the name or try a different city.</>
+                : 'Try a different treatment name, city, or clear your filters.'}
+            </p>
+            <button onClick={() => setFilters(f => ({ ...f, search: '', treatment: '', type: '', minCost: '', maxCost: '', nabh: '' }))} className="btn btn-primary btn-sm mt-2">Clear all filters</button>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">

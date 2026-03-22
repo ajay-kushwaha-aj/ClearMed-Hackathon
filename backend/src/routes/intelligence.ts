@@ -98,8 +98,7 @@ router.get('/treatment/:treatmentId', async (req: Request, res: Response, next: 
       prisma.treatment.findUnique({ where: { id: treatmentId } }),
       prisma.bill.findMany({
         where: { treatmentId, status: 'BILL_VERIFIED', hospital: { city: { contains: city, mode: 'insensitive' } } },
-        include: { hospital: { select: { type: true } } },
-        select: { totalCost: true, roomCharges: true, surgeryFee: true, implantCost: true, pharmacyCost: true, otherCharges: true, hospital: true },
+        select: { totalCost: true, roomCharges: true, surgeryFee: true, implantCost: true, pharmacyCost: true, otherCharges: true, hospital: { select: { type: true } } },
       }),
       // All-city costs
       prisma.bill.groupBy({
@@ -129,7 +128,7 @@ router.get('/treatment/:treatmentId', async (req: Request, res: Response, next: 
     }
 
     // Govt vs Private
-    const govtBills = bills.filter(b => ['GOVERNMENT','TRUST','CHARITABLE'].includes(b.hospital.type));
+    const govtBills = bills.filter(b => ['GOVERNMENT', 'TRUST', 'CHARITABLE'].includes(b.hospital.type));
     const privateBills = bills.filter(b => b.hospital.type === 'PRIVATE');
     const govtVsPrivate = govtBills.length > 0 && privateBills.length > 0 ? {
       govtAvg: Math.round(govtBills.reduce((s, b) => s + b.totalCost, 0) / govtBills.length),
@@ -167,7 +166,7 @@ router.get('/treatment/:treatmentId', async (req: Request, res: Response, next: 
       other: Math.round(bills.reduce((s, b) => s + (b.otherCharges || 0), 0) / bills.length),
     } : null;
 
-    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     res.json({
       data: {

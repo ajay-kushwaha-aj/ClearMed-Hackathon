@@ -107,14 +107,14 @@ export async function queueNotification(
       body: template.html,
       refId: data.refId as string | undefined,
     })),
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 // ── Send pending notifications (called by cron/worker) ────────────────────
 
 export async function sendPendingNotifications(limit = 50): Promise<void> {
   const pending = await prisma.notification.findMany({
-    where: { status: 'NOTIF_PENDING', channel: 'EMAIL' },
+    where: { status: 'PENDING', channel: 'EMAIL' },
     include: { user: { select: { email: true, name: true } } } as any,
     orderBy: { createdAt: 'asc' },
     take: limit,
