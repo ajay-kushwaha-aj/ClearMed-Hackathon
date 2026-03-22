@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 import { useState } from 'react';
 import { BarChart3, Zap, Shield, Code, ArrowRight, CheckCircle, Copy, Check, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -25,8 +26,7 @@ const ENDPOINTS = [
   {
     method: 'GET', path: '/api/b2b/bulk/costs?city=Mumbai',
     desc: 'Bulk cost data for all treatments (Professional+ plan only)',
-    sample: `{"data":[{"treatment":{"name":"Angioplasty"},"avg":285000,"min":180000,"max":520000,"n":23},...]}`,
-  },
+    sample: `{"data":[{"treatment":{"name":"Angioplasty"},"avg":285000,"min":180000,"max":520000,"n":23}]}`,
 ];
 
 export default function B2BPage() {
