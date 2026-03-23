@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Menu, X, Heart, Search, Upload, Stethoscope, LayoutDashboard, Trophy, TrendingUp, Users, Shield, Building2, IndianRupee, LogIn, LogOut, UserCircle } from 'lucide-react';
+import { Menu, X, Heart, Search, Upload, Stethoscope, LayoutDashboard, Trophy, TrendingUp, Users, Shield, Building2, IndianRupee, LogIn, LogOut, UserCircle, FileText } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/search', icon: <Search className="w-4 h-4" />, label: 'Find Hospitals' },
   { href: '/symptoms', icon: <Stethoscope className="w-4 h-4" />, label: 'Symptoms' },
+  { href: '/reports', icon: <FileText className="w-4 h-4" />, label: 'Reports' },
   { href: '/insurance', icon: <Shield className="w-4 h-4" />, label: 'Insurance' },
   { href: '/dashboard', icon: <TrendingUp className="w-4 h-4" />, label: 'Cost Trends' },
   { href: '/community', icon: <Users className="w-4 h-4" />, label: 'Reviews' },
@@ -17,7 +18,7 @@ const MOBILE_NAV = [
   { href: '/', icon: <Heart className="w-5 h-5" />, label: 'Home' },
   { href: '/search', icon: <Search className="w-5 h-5" />, label: 'Search' },
   { href: '/symptoms', icon: <Stethoscope className="w-5 h-5" />, label: 'Symptoms' },
-  { href: '/insurance', icon: <Shield className="w-5 h-5" />, label: 'Insurance' },
+  { href: '/reports', icon: <FileText className="w-5 h-5" />, label: 'Reports' },
   { href: '/upload', icon: <Upload className="w-5 h-5" />, label: 'Upload' },
 ];
 
@@ -81,7 +82,7 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
                 <>
                   <Link href="/contribute" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${solid ? 'text-gray-600 hover:text-brand-700' : 'text-white/70 hover:text-white'}`}>
                     <Trophy className="w-3.5 h-3.5" />
-                    <span className="text-brand-600 font-bold">{user.points || 0} pts</span>
+                    <span className={`${solid ? 'text-brand-600' : 'text-white'} font-bold`}>{user.points || 0} pts</span>
                   </Link>
                   <Link href="/profile" className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium ${solid ? 'text-gray-700 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
                     <UserCircle className="w-4 h-4" />

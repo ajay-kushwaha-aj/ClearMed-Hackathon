@@ -129,6 +129,9 @@ export interface ExtractedBillData {
   admissionDate?: string;
   dischargeDate?: string;
   stayDays?: number;
+  pathologyCost?: number;
+  radiologyCost?: number;
+  gst?: number;
   confidence: number;
 }
 
@@ -175,6 +178,19 @@ const DATE_PATTERNS = [
 const DISCHARGE_PATTERNS = [
   /(?:discharge|discharged|date\s+of\s+discharge)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
   /(?:dod|discharged\s+on)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
+];
+
+const PATHOLOGY_PATTERNS = [
+  /(?:pathology|lab(?:oratory)?|tests?|investigations?)\s*(?:charges?)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+  /blood\s*tests?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+];
+
+const RADIOLOGY_PATTERNS = [
+  /(?:radiology|x-?ray|scan|mri|ct\s*scan|ultrasound)\s*(?:charges?)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+];
+
+const GST_PATTERNS = [
+  /(?:gst|cgst|sgst|igst|tax)\s*(?:amount)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const DOCTOR_PATTERNS = [
@@ -262,6 +278,16 @@ export function extractBillData(text: string): ExtractedBillData {
     const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
     if (days > 0 && days < 365) data.stayDays = days;
   }
+
+  // New fields
+  data.pathologyCost = extractFirst(text, PATHOLOGY_PATTERNS);
+  if (data.pathologyCost) fieldsExtracted++;
+
+  data.radiologyCost = extractFirst(text, RADIOLOGY_PATTERNS);
+  if (data.radiologyCost) fieldsExtracted++;
+
+  data.gst = extractFirst(text, GST_PATTERNS);
+  if (data.gst) fieldsExtracted++;
 
   // Doctor name (first match after PII removal)
   for (const pattern of DOCTOR_PATTERNS) {

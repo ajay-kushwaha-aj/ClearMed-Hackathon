@@ -10,8 +10,8 @@ import prisma from '../lib/prisma';
 import { hashPassword } from '../lib/auth';
 
 const ADMINS = [
-  { email: 'admin@clearmed.in', name: 'Super Admin', password: 'ClearMed@Admin2025!', role: 'SUPER_ADMIN' as const },
-  { email: 'moderator@clearmed.in', name: 'Content Moderator', password: 'ClearMed@Mod2025!', role: 'MODERATOR' as const },
+  { email: 'admin@clearmed.in', name: 'Super Admin', password: 'ClearMed@Admin2026', role: 'SUPER_ADMIN' as const },
+  { email: 'moderator@clearmed.in', name: 'Content Moderator', password: 'ClearMed@Mod2026', role: 'MODERATOR' as const },
 ];
 
 async function main() {
@@ -20,7 +20,11 @@ async function main() {
   for (const a of ADMINS) {
     const existing = await prisma.adminUser.findUnique({ where: { email: a.email } });
     if (existing) {
-      console.log(`  ⚠️  ${a.email} already exists — skipping`);
+      await prisma.adminUser.update({
+        where: { email: a.email },
+        data: { passwordHash: await hashPassword(a.password) },
+      });
+      console.log(`  🔄 Updated password for ${a.email}`);
       continue;
     }
 

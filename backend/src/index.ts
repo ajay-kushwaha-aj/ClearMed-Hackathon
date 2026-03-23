@@ -31,7 +31,7 @@ app.use(helmet({
 }));
 app.use(securityHeaders);
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'production' ? (process.env.FRONTEND_URL || 'https://clearmed.in') : true,
   credentials: true,
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
@@ -61,7 +61,7 @@ app.get('/health', (_, res) => res.json({
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), '0.0.0.0', () => {
   console.log(`\n🚀 ClearMed API v4 → http://localhost:${PORT}`);
   console.log(`   Security: HSTS, Rate limiting, OWASP hardening`);
   console.log(`   DPDP Act 2023: Erasure + Export endpoints live\n`);

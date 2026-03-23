@@ -99,7 +99,7 @@ router.post('/users', requireAdmin, requireRole('SUPER_ADMIN'), async (req: Requ
 router.patch('/users/:id', requireAdmin, requireRole('SUPER_ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { role, isActive } = z.object({
-      role: z.enum(['SUPER_ADMIN','MODERATOR','READ_ONLY']).optional(),
+      role: z.enum(['SUPER_ADMIN', 'MODERATOR', 'READ_ONLY']).optional(),
       isActive: z.boolean().optional(),
     }).parse(req.body);
 

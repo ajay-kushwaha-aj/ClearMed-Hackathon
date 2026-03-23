@@ -56,6 +56,9 @@ router.patch('/bill/:id/approve', async (req: Request, res: Response, next: Next
       implantCost: z.coerce.number().optional(),
       surgeryFee: z.coerce.number().optional(),
       pharmacyCost: z.coerce.number().optional(),
+      pathologyCost: z.coerce.number().optional(),
+      radiologyCost: z.coerce.number().optional(),
+      gst: z.coerce.number().optional(),
       otherCharges: z.coerce.number().optional(),
       stayDays: z.coerce.number().optional(),
     });

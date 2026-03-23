@@ -15,18 +15,21 @@ echo [1/2] Starting Backend (Port 4000)...
 start "ClearMed Backend" cmd /k "cd backend && npm run dev"
 
 echo [2/2] Starting Frontend (Port 3000)...
-start "ClearMed Frontend" cmd /k "cd frontend && npm run dev"
+start "ClearMed Frontend" cmd /k "cd frontend && npm run dev -- -H 0.0.0.0"
 
 echo.
 echo  =========================================
 echo    Services are starting in new windows!
 echo  =========================================
 echo.
+FOR /F "tokens=2 delims=:" %%A in ('ipconfig ^| findstr IPv4') do set ip=%%A
+set IPv4=%ip: =%
 echo   Website:  http://localhost:3000
+echo   Network:  http://%IPv4%:3000
 echo   Admin:    http://localhost:3000/admin/analytics
 echo   API:      http://localhost:4000/health
 echo.
 echo   Login: admin@clearmed.in
-echo   Pass:  ClearMed@Admin2025!
+echo   Pass:  ClearMed@Admin2026
 echo.
 pause

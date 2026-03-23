@@ -31,18 +31,42 @@ const upload = multer({
   }
 });
 
+// Extract bill data (preview mode)
+router.post('/extract', upload.single('bill'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: 'No file uploaded' });
+      return;
+    }
+    const { processImageWithOcr } = await import('../lib/ocr');
+    const ocrOutput = await processImageWithOcr(req.file.path);
+    // Unlink the file after extraction if we don't need it stored yet. Let's keep it in /uploads to reuse later?
+    // Actually, saving it in the final submission is cleaner, but let's leave it for now since multer saves it to disk. 
+    res.json({ data: ocrOutput.extractedData });
+  } catch (err) {
+    if (req.file) fs.unlink(req.file.path, () => {});
+    next(err);
+  }
+});
+
 // Upload bill
 router.post('/upload', upload.single('bill'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const schema = z.object({
-      hospitalId: z.string(),
-      treatmentId: z.string(),
+      hospitalId: z.string().optional(),
+      newHospitalName: z.string().optional(),
+      newHospitalAddress: z.string().optional(),
+      treatmentId: z.string().optional(),
+      newTreatmentName: z.string().optional(),
       city: z.string(),
       totalCost: z.coerce.number().positive(),
       roomCharges: z.coerce.number().optional(),
       implantCost: z.coerce.number().optional(),
       surgeryFee: z.coerce.number().optional(),
       pharmacyCost: z.coerce.number().optional(),
+      pathologyCost: z.coerce.number().optional(),
+      radiologyCost: z.coerce.number().optional(),
+      gst: z.coerce.number().optional(),
       otherCharges: z.coerce.number().optional(),
       admissionDate: z.string().optional(),
       dischargeDate: z.string().optional(),
@@ -51,16 +75,67 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
     const data = schema.parse(req.body);
     const fileUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
 
+    let finalHospitalId = data.hospitalId;
+
+    if (!finalHospitalId && data.newHospitalName) {
+      // Create a brand new hospital entry
+      const baseSlug = data.newHospitalName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const uniqueSuffix = Math.random().toString(36).slice(2, 6);
+      
+      const newHosp = await prisma.hospital.create({
+        data: {
+          name: data.newHospitalName,
+          slug: `${baseSlug}-${uniqueSuffix}`,
+          city: data.city,
+          address: data.newHospitalAddress || 'Address not provided',
+          type: 'PRIVATE',
+          naabhStatus: false,
+        }
+      });
+      finalHospitalId = newHosp.id;
+    }
+
+    if (!finalHospitalId) {
+      res.status(400).json({ error: 'Please select a hospital or enter a custom hospital name.' });
+      return;
+    }
+
+    let finalTreatmentId = data.treatmentId;
+
+    if (!finalTreatmentId && data.newTreatmentName) {
+      // Create a brand new treatment entry
+      const baseSlug = data.newTreatmentName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const uniqueSuffix = Math.random().toString(36).slice(2, 6);
+      
+      const newTreat = await prisma.treatment.create({
+        data: {
+          name: data.newTreatmentName,
+          slug: `${baseSlug}-${uniqueSuffix}`,
+          category: 'Other / Pending Review',
+          specialization: 'General',
+        }
+      });
+      finalTreatmentId = newTreat.id;
+    }
+
+    if (!finalTreatmentId) {
+      res.status(400).json({ error: 'Please select a treatment or enter a custom treatment name.' });
+      return;
+    }
+
     const bill = await prisma.bill.create({
       data: {
-        hospitalId: data.hospitalId,
-        treatmentId: data.treatmentId,
+        hospitalId: finalHospitalId,
+        treatmentId: finalTreatmentId,
         city: data.city,
         totalCost: data.totalCost,
         roomCharges: data.roomCharges,
         implantCost: data.implantCost,
         surgeryFee: data.surgeryFee,
         pharmacyCost: data.pharmacyCost,
+        pathologyCost: data.pathologyCost,
+        radiologyCost: data.radiologyCost,
+        gst: data.gst,
         otherCharges: data.otherCharges,
         admissionDate: data.admissionDate ? new Date(data.admissionDate) : undefined,
         dischargeDate: data.dischargeDate ? new Date(data.dischargeDate) : undefined,

@@ -19,6 +19,7 @@ import partnerRoutes from './partners';
 import insuranceRoutes from './insurance';
 import b2bRoutes from './b2bApi';
 import userAuthRoutes from './userAuth';
+import reportRoutes from './reports';
 
 export const router = Router();
 
@@ -42,3 +43,4 @@ router.use('/partners', partnerRoutes);
 router.use('/insurance', insuranceRoutes);
 router.use('/b2b', b2bRoutes);
 router.use('/auth', userAuthRoutes);
+router.use('/reports', reportRoutes);

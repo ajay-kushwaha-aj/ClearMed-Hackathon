@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum HospitalType {
@@ -247,6 +248,9 @@ model Bill {
   implantCost   Float?     @map("implant_cost")
   surgeryFee    Float?     @map("surgery_fee")
   pharmacyCost  Float?     @map("pharmacy_cost")
+  pathologyCost Float?     @map("pathology_cost")
+  radiologyCost Float?     @map("radiology_cost")
+  gst           Float?
   otherCharges  Float?     @map("other_charges")
   admissionDate DateTime?  @map("admission_date")
   dischargeDate DateTime?  @map("discharge_date")

@@ -1,4 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const isLocalNetwork = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const API_URL = isLocalNetwork ? `http://${window.location.hostname}:4000/api` : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
 
 async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${endpoint}`, {
@@ -135,8 +136,17 @@ export const scoresAPI = {
 
 // ─── Bills API ────────────────────────────────────────────────────────────
 export const billsAPI = {
+  extract: (formData: FormData) =>
+    fetch(`${API_URL}/bills/extract`, { method: 'POST', body: formData }).then(r => r.json()),
   upload: (formData: FormData) =>
     fetch(`${API_URL}/bills/upload`, { method: 'POST', body: formData }).then(r => r.json()),
+};
+
+// ─── OCR API ──────────────────────────────────────────────────────────────
+export const ocrAPI = {
+  getQueue: (status = 'BILL_OCR_REVIEW', page = 1) => fetchAPI<{ data: any[], meta: any }>(`/ocr/queue?status=${status}&page=${page}`),
+  approve: (id: string, data: any) => fetch(`${API_URL}/ocr/bill/${id}/approve`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json()),
+  reject: (id: string, reason: string) => fetch(`${API_URL}/ocr/bill/${id}/reject`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason }) }).then(r => r.json()),
 };
 
 // ─── Stats API ────────────────────────────────────────────────────────────

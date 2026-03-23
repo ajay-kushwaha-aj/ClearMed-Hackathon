@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className={`${outfit.variable} font-sans bg-gray-50 text-gray-900 antialiased`}>
+      <body suppressHydrationWarning className={`${outfit.variable} font-sans bg-gray-50 text-gray-900 antialiased`}>
         {children}
         <CookieBanner />
         <PwaInstaller />

@@ -9,12 +9,14 @@ type Step = 'hospital' | 'form' | 'success';
 export default function UploadPage() {
   const [step, setStep] = useState<Step>('hospital');
   const [loading, setLoading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState('');
 
   // Hospital search
   const [hospitalSearch, setHospitalSearch] = useState('');
   const [hospitalResults, setHospitalResults] = useState<Hospital[]>([]);
   const [selectedHospital, setSelectedHospital] = useState<Hospital | null>(null);
+  const [isNewHospital, setIsNewHospital] = useState(false);
 
   // Treatment search
   const [treatmentSearch, setTreatmentSearch] = useState('');
@@ -27,13 +29,18 @@ export default function UploadPage() {
   const [form, setForm] = useState({
     city: 'Delhi',
     totalCost: '',
-    roomCharges: '',
-    implantCost: '',
-    surgeryFee: '',
-    pharmacyCost: '',
-    otherCharges: '',
+    roomCharges: { qty: '', unitPrice: '', amount: '' },
+    implantCost: { qty: '', unitPrice: '', amount: '' },
+    surgeryFee: { qty: '', unitPrice: '', amount: '' },
+    pharmacyCost: { qty: '', unitPrice: '', amount: '' },
+    pathologyCost: { qty: '', unitPrice: '', amount: '' },
+    radiologyCost: { qty: '', unitPrice: '', amount: '' },
+    gst: { qty: '', unitPrice: '', amount: '' },
+    otherCharges: { qty: '', unitPrice: '', amount: '' },
     admissionDate: '',
     dischargeDate: '',
+    newHospitalName: '',
+    newHospitalAddress: ''
   });
 
   // Pre-load hospitals when city changes
@@ -61,29 +68,87 @@ export default function UploadPage() {
     } catch {}
   };
 
+  const handleFileSelect = async (f: File) => {
+    setFile(f);
+    setIsExtracting(true);
+    try {
+      const fd = new FormData();
+      fd.append('bill', f);
+      const res = await billsAPI.extract(fd);
+      if (res.data) {
+        const d = res.data;
+        setForm(prev => ({
+          ...prev,
+          totalCost: d.totalCost ? String(d.totalCost) : prev.totalCost,
+          roomCharges: { ...prev.roomCharges, amount: d.roomCharges ? String(d.roomCharges) : prev.roomCharges.amount },
+          implantCost: { ...prev.implantCost, amount: d.implantCost ? String(d.implantCost) : prev.implantCost.amount },
+          surgeryFee: { ...prev.surgeryFee, amount: d.surgeryFee ? String(d.surgeryFee) : prev.surgeryFee.amount },
+          pharmacyCost: { ...prev.pharmacyCost, amount: d.pharmacyCost ? String(d.pharmacyCost) : prev.pharmacyCost.amount },
+          pathologyCost: { ...prev.pathologyCost, amount: d.pathologyCost ? String(d.pathologyCost) : prev.pathologyCost.amount },
+          radiologyCost: { ...prev.radiologyCost, amount: d.radiologyCost ? String(d.radiologyCost) : prev.radiologyCost.amount },
+          gst: { ...prev.gst, amount: d.gst ? String(d.gst) : prev.gst.amount },
+          otherCharges: { ...prev.otherCharges, amount: d.otherCharges ? String(d.otherCharges) : prev.otherCharges.amount },
+          admissionDate: d.admissionDate || prev.admissionDate,
+          dischargeDate: d.dischargeDate || prev.dischargeDate,
+        }));
+      }
+    } catch (err) {
+      console.error('OCR Extraction failed', err);
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); setDrag(false);
     const f = e.dataTransfer.files[0];
-    if (f && ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(f.type)) setFile(f);
+    if (f && ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(f.type)) handleFileSelect(f);
     else setError('Please upload a PDF, JPG, or PNG file');
   }, []);
 
   const handleSubmit = async () => {
-    if (!selectedHospital || !selectedTreatment || !form.totalCost) {
-      setError('Please fill in the required fields'); return;
+    if (!selectedHospital && (!isNewHospital || !form.newHospitalName)) {
+      setError('Please select a hospital or enter a new one.'); return;
+    }
+    // Allow free-text treatment submission
+    let finalTreatmentId = selectedTreatment?.id;
+    let fallbackTreatmentName = '';
+    if (!finalTreatmentId) {
+      if (treatmentSearch && treatmentSearch.trim().length > 0) {
+        fallbackTreatmentName = treatmentSearch.trim();
+      } else {
+        setError('Please select or type a treatment.'); 
+        return;
+      }
+    }
+    
+    if (!form.totalCost) {
+      setError('Total Bill Amount is required.'); return;
     }
     setLoading(true); setError('');
     try {
       const fd = new FormData();
-      fd.append('hospitalId', selectedHospital.id);
-      fd.append('treatmentId', selectedTreatment.id);
+      if (selectedHospital) {
+        fd.append('hospitalId', selectedHospital.id);
+      } else if (isNewHospital && form.newHospitalName) {
+        fd.append('newHospitalName', form.newHospitalName);
+        if (form.newHospitalAddress) fd.append('newHospitalAddress', form.newHospitalAddress);
+      }
+      if (finalTreatmentId) {
+        fd.append('treatmentId', finalTreatmentId);
+      } else if (fallbackTreatmentName) {
+        fd.append('newTreatmentName', fallbackTreatmentName);
+      }
       fd.append('city', form.city);
       fd.append('totalCost', form.totalCost);
-      if (form.roomCharges) fd.append('roomCharges', form.roomCharges);
-      if (form.implantCost) fd.append('implantCost', form.implantCost);
-      if (form.surgeryFee) fd.append('surgeryFee', form.surgeryFee);
-      if (form.pharmacyCost) fd.append('pharmacyCost', form.pharmacyCost);
-      if (form.otherCharges) fd.append('otherCharges', form.otherCharges);
+      if (form.roomCharges.amount) fd.append('roomCharges', form.roomCharges.amount);
+      if (form.implantCost.amount) fd.append('implantCost', form.implantCost.amount);
+      if (form.surgeryFee.amount) fd.append('surgeryFee', form.surgeryFee.amount);
+      if (form.pharmacyCost.amount) fd.append('pharmacyCost', form.pharmacyCost.amount);
+      if (form.pathologyCost.amount) fd.append('pathologyCost', form.pathologyCost.amount);
+      if (form.radiologyCost.amount) fd.append('radiologyCost', form.radiologyCost.amount);
+      if (form.gst.amount) fd.append('gst', form.gst.amount);
+      if (form.otherCharges.amount) fd.append('otherCharges', form.otherCharges.amount);
       if (form.admissionDate) fd.append('admissionDate', form.admissionDate);
       if (form.dischargeDate) fd.append('dischargeDate', form.dischargeDate);
       if (file) fd.append('bill', file);
@@ -103,13 +168,13 @@ export default function UploadPage() {
       <Navbar />
       <div className="pt-16 pb-20 lg:pb-0">
         <div className="bg-brand-900 py-8">
-          <div className="max-w-2xl mx-auto px-4 text-center">
+          <div className="max-w-4xl mx-auto px-4 text-center">
             <h1 className="text-2xl font-bold text-white mb-2">Upload Your Hospital Bill</h1>
             <p className="text-brand-300 text-sm">Help others understand real treatment costs. Your personal info is auto-removed.</p>
           </div>
         </div>
 
-        <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto px-4 py-8">
           {/* Privacy notice */}
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-6 flex gap-3">
             <Shield className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -129,9 +194,9 @@ export default function UploadPage() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Bill Uploaded!</h2>
               <p className="text-gray-500 mb-2">Thank you for contributing to healthcare transparency in India.</p>
-              <p className="text-sm text-gray-400 mb-8">Your bill will be verified within 24–48 hours. Once verified, it will help future patients compare costs at {selectedHospital?.name}.</p>
+              <p className="text-sm text-gray-400 mb-8">Your bill will be verified within 24–48 hours. Once verified, it will help future patients compare costs at {selectedHospital?.name || form.newHospitalName}.</p>
               <div className="flex gap-3 justify-center">
-                <button onClick={() => { setStep('hospital'); setSelectedHospital(null); setSelectedTreatment(null); setFile(null); setForm(f => ({ ...f, totalCost: '', roomCharges: '', implantCost: '' })); }}
+                <button onClick={() => { setStep('hospital'); setSelectedHospital(null); setIsNewHospital(false); setSelectedTreatment(null); setFile(null); setForm(f => ({ ...f, totalCost: '', roomCharges: { qty: '', unitPrice: '', amount: '' }, implantCost: { qty: '', unitPrice: '', amount: '' }, surgeryFee: { qty: '', unitPrice: '', amount: '' }, pharmacyCost: { qty: '', unitPrice: '', amount: '' }, pathologyCost: { qty: '', unitPrice: '', amount: '' }, radiologyCost: { qty: '', unitPrice: '', amount: '' }, gst: { qty: '', unitPrice: '', amount: '' }, otherCharges: { qty: '', unitPrice: '', amount: '' }, newHospitalName: '', newHospitalAddress: '' })); }}
                   className="btn btn-secondary btn-md">Upload Another</button>
                 <a href="/" className="btn btn-primary btn-md">Back to Home</a>
               </div>
@@ -150,7 +215,23 @@ export default function UploadPage() {
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
                   Hospital <span className="text-red-500">*</span>
                 </label>
-                {selectedHospital ? (
+                {isNewHospital ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
+                      <div>
+                        <p className="text-sm font-medium text-brand-800">Add Custom Hospital</p>
+                        <p className="text-xs text-brand-600">This hospital will be permanently added to {form.city}</p>
+                      </div>
+                      <button onClick={() => { setIsNewHospital(false); setForm(f => ({ ...f, newHospitalName: '', newHospitalAddress: '' })); }} className="text-brand-400 hover:text-red-500">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div>
+                      <input type="text" placeholder="Hospital Name *" value={form.newHospitalName} onChange={e => setForm(f => ({ ...f, newHospitalName: e.target.value }))} className="input mb-3 bg-white" />
+                      <input type="text" placeholder="Hospital Full Address (Optional)" value={form.newHospitalAddress} onChange={e => setForm(f => ({ ...f, newHospitalAddress: e.target.value }))} className="input bg-white" />
+                    </div>
+                  </div>
+                ) : selectedHospital ? (
                   <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
                     <div>
                       <p className="text-sm font-medium text-brand-800">{selectedHospital.name}</p>
@@ -161,20 +242,25 @@ export default function UploadPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative">
-                    <input value={hospitalSearch} onChange={e => searchHospitals(e.target.value)}
-                      placeholder="Type hospital name..." className="input" />
+                  <div>
+                    <input value={hospitalSearch} onChange={e => { searchHospitals(e.target.value); setSelectedHospital(null); }}
+                      placeholder="Type hospital name to search..." className="input" />
                     {hospitalResults.length > 0 && (
-                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                      <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden z-10 max-h-48 overflow-y-auto">
                         {hospitalResults.map(h => (
-                          <button key={h.id} onClick={() => { setSelectedHospital(h); setHospitalResults([]); setHospitalSearch(''); }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors">
+                          <button key={h.id} onClick={() => { setSelectedHospital(h); setHospitalResults([]); setHospitalSearch(h.name); }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors cursor-pointer border-b border-gray-50 last:border-0 block">
                             <span className="font-medium text-gray-800">{h.name}</span>
                             <span className="text-gray-400 ml-2">{h.city}</span>
                           </button>
                         ))}
                       </div>
                     )}
+                    <div className="mt-3">
+                      <button onClick={() => { setIsNewHospital(true); setHospitalResults([]); setSelectedHospital(null); }} className="text-sm text-brand-600 font-semibold hover:underline bg-brand-50 px-3 py-1.5 rounded-lg w-full text-center">
+                        + Add Custom Hospital Manually
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -195,19 +281,22 @@ export default function UploadPage() {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative">
-                    <input value={treatmentSearch} onChange={e => searchTreatments(e.target.value)}
-                      placeholder="Search treatment name..." className="input" />
+                  <div>
+                    <input value={treatmentSearch} onChange={e => { searchTreatments(e.target.value); setSelectedTreatment(null); }}
+                      placeholder="Search treatment name (e.g. Appendicitis)..." className="input" />
                     {treatmentResults.length > 0 && (
-                      <div className="absolute top-full mt-1 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                      <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden z-10 max-h-48 overflow-y-auto">
                         {treatmentResults.map(t => (
-                          <button key={t.id} onClick={() => { setSelectedTreatment(t); setTreatmentResults([]); setTreatmentSearch(''); }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors">
+                          <button key={t.id} onClick={() => { setSelectedTreatment(t); setTreatmentResults([]); setTreatmentSearch(t.name); }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors cursor-pointer border-b border-gray-50 last:border-0 block">
                             <span className="font-medium text-gray-800">{t.name}</span>
                             <span className="text-gray-400 ml-2">{t.category}</span>
                           </button>
                         ))}
                       </div>
+                    )}
+                    {!selectedTreatment && treatmentSearch && treatmentResults.length === 0 && (
+                       <p className="text-xs text-brand-600 mt-2">Custom treatment will be submitted.</p>
                     )}
                   </div>
                 )}
@@ -216,40 +305,96 @@ export default function UploadPage() {
               {/* City */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">City</label>
-                <select value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input appearance-none cursor-pointer">
-                  {['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune'].map(c => <option key={c}>{c}</option>)}
-                </select>
+                <input list="cities" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input" placeholder="e.g. Delhi" />
+                <datalist id="cities">
+                  {['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune'].map(c => <option key={c} value={c} />)}
+                </datalist>
               </div>
 
               {/* Cost fields */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-3 block">
-                  Bill Costs (₹) <span className="text-red-500">*</span>
+                  Bill Costs
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { key: 'totalCost', label: 'Total Bill Amount *', required: true },
-                    { key: 'surgeryFee', label: 'Surgery / Doctor Fee' },
-                    { key: 'roomCharges', label: 'Room Charges' },
-                    { key: 'implantCost', label: 'Implant / Device Cost' },
-                    { key: 'pharmacyCost', label: 'Pharmacy / Medicines' },
-                    { key: 'otherCharges', label: 'Other Charges' },
-                  ].map(field => (
-                    <div key={field.key}>
-                      <label className="text-xs text-gray-500 mb-1 block">{field.label}</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">₹</span>
-                        <input
-                          type="number"
-                          value={form[field.key as keyof typeof form]}
-                          onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))}
-                          placeholder="0"
-                          className="input pl-7"
-                          min="0"
-                        />
-                      </div>
-                    </div>
-                  ))}
+                
+                {/* Total Cost always required at the top */}
+                <div className="mb-6 bg-brand-50 p-4 rounded-xl border border-brand-200">
+                  <label className="text-sm font-bold text-brand-900 mb-1 block">Total Bill Amount <span className="text-red-500">*</span></label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                    <input type="number" value={form.totalCost} onChange={e => setForm(f => ({ ...f, totalCost: e.target.value }))} className="input pl-7 font-bold text-lg bg-white" placeholder="0" min="0" />
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
+                  <div className="grid grid-cols-12 gap-2 bg-gray-50 border-b border-gray-200 p-3 font-semibold text-gray-600 hidden md:grid">
+                    <div className="col-span-12 md:col-span-5">Description of Services</div>
+                    <div className="col-span-3 md:col-span-2 text-center hidden md:block">Qty</div>
+                    <div className="col-span-4 md:col-span-2 text-center hidden md:block">Unit Price (₹)</div>
+                    <div className="col-span-5 md:col-span-3 text-right hidden md:block">Amount (₹)</div>
+                  </div>
+                  <div className="divide-y divide-gray-100">
+                    {[
+                      { key: 'roomCharges', label: 'Room Charges' },
+                      { key: 'surgeryFee', label: 'Surgery / Doctor Fee' },
+                      { key: 'implantCost', label: 'Implant / Device Cost' },
+                      { key: 'pharmacyCost', label: 'Pharmacy / Medicines' },
+                      { key: 'pathologyCost', label: 'Pathology / Lab' },
+                      { key: 'radiologyCost', label: 'Radiology / Imaging' },
+                      { key: 'gst', label: 'GST / Taxes' },
+                      { key: 'otherCharges', label: 'Other Charges' },
+                    ].map(field => {
+                      const fieldData = form[field.key as keyof typeof form] as { qty: string, unitPrice: string, amount: string };
+                      
+                      const updateField = (k: keyof typeof fieldData, v: string) => {
+                        setForm(f => {
+                          const currentField = f[field.key as keyof typeof f] as { qty: string, unitPrice: string, amount: string };
+                          const newField = { ...currentField, [k]: v };
+                          
+                          if ((k === 'qty' || k === 'unitPrice') && newField.qty && newField.unitPrice) {
+                            newField.amount = String(Number(newField.qty) * Number(newField.unitPrice));
+                          }
+                          // If GST select changes and we have a valid totalCost, calculate 
+                          if (field.key === 'gst' && k === 'qty' && v !== '' && f.totalCost) {
+                            // Slab is selected in qty, amount = roughly Total * slab / (100+slab) but for simplicity we can just let users fill amount or we calculate slab on top?
+                            // Let's just leave amount untouched and let them fill it, or if they want it auto-populated:
+                            // The user said "fill the box at the end" implying they might just want the amount to be calculated.
+                          }
+                          return { ...f, [field.key]: newField };
+                        });
+                      };
+
+                      if (field.key === 'gst') {
+                        return (
+                          <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
+                            <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">{field.label}</div>
+                            <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
+                              <select value={fieldData.qty || ''} onChange={e => updateField('qty', e.target.value)} className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-2">
+                                <option value="" disabled>Slab %</option>
+                                <option value="0">0%</option>
+                                <option value="5">5%</option>
+                                <option value="18">18%</option>
+                                <option value="40">40%</option>
+                              </select>
+                              <div className="col-span-1 hidden md:block" />
+                              <input type="number" min="0" value={fieldData.amount} onChange={e => updateField('amount', e.target.value)} placeholder="Amt ₹" className="input text-right px-2 py-1.5 h-[34px] text-sm font-semibold text-gray-900 bg-white border-gray-300 col-span-2 md:col-span-3 ml-0 md:ml-2" />
+                            </div>
+                          </div>
+                        )
+                      }
+
+                      return (
+                        <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
+                          <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">{field.label}</div>
+                          <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
+                            <input type="number" min="0" value={fieldData.qty} onChange={e => updateField('qty', e.target.value)} placeholder="Qty" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
+                            <input type="number" min="0" value={fieldData.unitPrice} onChange={e => updateField('unitPrice', e.target.value)} placeholder="Price" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
+                            <input type="number" min="0" value={fieldData.amount} onChange={e => updateField('amount', e.target.value)} placeholder="Amt ₹" className="input text-right px-2 py-1.5 h-[34px] text-sm font-semibold text-gray-900 bg-white border-gray-300 col-span-2 md:col-span-3 ml-0 md:ml-2" />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -261,7 +406,7 @@ export default function UploadPage() {
                 ].map(d => (
                   <div key={d.key}>
                     <label className="text-xs text-gray-500 mb-1 block">{d.label}</label>
-                    <input type="date" value={form[d.key as keyof typeof form]}
+                    <input type="date" value={form[d.key as keyof typeof form] as string}
                       onChange={e => setForm(f => ({ ...f, [d.key]: e.target.value }))}
                       className="input text-sm" />
                   </div>
@@ -281,9 +426,11 @@ export default function UploadPage() {
                       <div>
                         <p className="text-sm font-medium text-brand-800">{file.name}</p>
                         <p className="text-xs text-brand-600">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        {isExtracting && <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1"><Loader2 className="w-3 h-3 animate-spin" /> Extracting data...</p>}
+                        {!isExtracting && <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1"><CheckCircle className="w-3 h-3" /> Data extracted</p>}
                       </div>
                     </div>
-                    <button onClick={() => setFile(null)} className="text-brand-400 hover:text-red-500">
+                    <button disabled={isExtracting} onClick={() => setFile(null)} className="text-brand-400 hover:text-red-500 disabled:opacity-50">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -298,7 +445,7 @@ export default function UploadPage() {
                     <p className="text-sm text-gray-600 font-medium">Drop your bill here, or click to browse</p>
                     <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG · Max 10MB</p>
                     <input id="file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) setFile(f); }} />
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
                   </div>
                 )}
                 <div className="flex items-start gap-2 mt-2">
@@ -308,8 +455,8 @@ export default function UploadPage() {
               </div>
 
               {/* Submit */}
-              <button onClick={handleSubmit} disabled={loading || !selectedHospital || !selectedTreatment || !form.totalCost}
-                className="btn btn-primary btn-lg w-full">
+              <button onClick={handleSubmit} disabled={loading}
+                className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2 mt-4 text-center">
                 {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</> : <><Upload className="w-5 h-5" /> Submit Bill</>}
               </button>
 

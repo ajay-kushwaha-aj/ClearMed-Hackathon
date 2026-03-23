@@ -4,7 +4,8 @@ import { Stethoscope, Search, AlertTriangle, AlertCircle, Clock, CheckCircle, Ar
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const isL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const API = isL ? `http://${window.location.hostname}:4000/api` : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
 
 interface Condition {
   name: string;

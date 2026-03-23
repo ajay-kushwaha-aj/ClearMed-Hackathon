@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { BarChart3, Zap, Shield, Code, ArrowRight, CheckCircle, Copy, Check, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const isL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const API = isL ? `http://${window.location.hostname}:4000/api` : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
 
 const PLANS = [
   { name: 'Starter', price: '₹5,000', quota: '1,000 calls/month', target: 'Startups & researchers', color: 'border-gray-200 bg-white' },

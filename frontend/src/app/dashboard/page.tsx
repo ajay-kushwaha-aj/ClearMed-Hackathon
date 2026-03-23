@@ -4,7 +4,8 @@ import { TrendingUp, TrendingDown, BarChart3, MapPin, Loader2, ArrowUpRight, Inf
 import Navbar from '@/components/Navbar';
 import Link from 'next/link';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const isL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const API = isL ? `http://${window.location.hostname}:4000/api` : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
 
 interface TrendPoint { label: string; avg: number; min: number; max: number; sampleSize: number; govtAvg?: number; privateAvg?: number }
 interface CostIntel {
