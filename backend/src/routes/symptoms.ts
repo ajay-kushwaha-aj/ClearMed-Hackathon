@@ -26,8 +26,8 @@ router.post('/analyze', symptomLimiter, async (req: Request, res: Response, next
     const startTime = Date.now();
     const result = await analyzeSymptoms(symptoms, city);
 
-    // Fetch matching hospitals grouped by departments
-    const departments = Array.from(new Set(result.conditions.map(c => c.department).filter(Boolean)));
+    // Fetch matching hospitals grouped by specialists
+    const departments = Array.from(new Set(result.specialists)).filter(Boolean) as string[];
     const hospitalsByDepartment: Record<string, any[]> = {};
 
     if (departments.length > 0) {
