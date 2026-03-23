@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/insurance', icon: <Shield className="w-4 h-4" />, label: 'Insurance' },
   { href: '/dashboard', icon: <TrendingUp className="w-4 h-4" />, label: 'Cost Trends' },
   { href: '/community', icon: <Users className="w-4 h-4" />, label: 'Reviews' },
+  { href: '/admin/analytics', icon: <Shield className="w-4 h-4" />, label: 'Admin' },
 ];
 
 const MOBILE_NAV = [

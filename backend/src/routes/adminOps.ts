@@ -184,4 +184,70 @@ router.post('/import/hospitals', requireAdmin, requireRole('SUPER_ADMIN', 'MODER
   } catch (err) { next(err); }
 });
 
+// ── Admin Bill Management ──────────────────────────────────────────────────
+router.get('/bills', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { status = 'BILL_PENDING', page = '1' } = req.query as Record<string, string>;
+    const skip = (parseInt(page) - 1) * 20;
+    
+    // allow matching multiple statuses if comma separated
+    const statuses = status.split(',');
+
+    const [bills, total] = await Promise.all([
+      prisma.bill.findMany({
+        where: { status: { in: statuses as any[] } },
+        include: { 
+          hospital: { select: { name: true, city: true } }, 
+          treatment: { select: { name: true } },
+          user: { select: { name: true, email: true } },
+          ocrResult: true
+        },
+        orderBy: { createdAt: 'desc' }, 
+        skip, 
+        take: 20,
+      }),
+      prisma.bill.count({ where: { status: { in: statuses as any[] } } }),
+    ]);
+
+    res.json({ data: bills, meta: { total, page: parseInt(page), totalPages: Math.ceil(total / 20) } });
+  } catch (err) { next(err); }
+});
+
+router.post('/bills/:id/verify', requireAdmin, requireRole('SUPER_ADMIN', 'MODERATOR'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { action, notes } = z.object({
+      action: z.enum(['APPROVE', 'REJECT']),
+      notes: z.string().optional()
+    }).parse(req.body);
+
+    const newStatus = action === 'APPROVE' ? 'BILL_VERIFIED' : 'BILL_REJECTED';
+
+    const bill = await prisma.bill.update({
+      where: { id: req.params.id },
+      data: { status: newStatus, notes },
+      include: { user: true }
+    });
+
+    // If approved and has user, award points
+    if (action === 'APPROVE' && bill.uploadedBy) {
+      try {
+        const { awardPoints } = await import('../lib/pointsEngine');
+        await awardPoints(bill.uploadedBy, 'BILL_VERIFIED', bill.id);
+      } catch (e) {
+        console.error('Points award failed:', e);
+      }
+    }
+
+    await writeAuditLog({ 
+      req, 
+      action: action as any, 
+      entity: 'bill', 
+      entityId: bill.id, 
+      description: `Bill ${action.toLowerCase()}ed` + (notes ? ` - ${notes}` : '')
+    });
+
+    res.json({ data: bill, message: `Bill ${action.toLowerCase()}ed successfully` });
+  } catch (err) { next(err); }
+});
+
 export default router;

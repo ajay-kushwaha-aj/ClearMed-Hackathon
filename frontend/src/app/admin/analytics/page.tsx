@@ -52,13 +52,22 @@ export default function AdminAnalyticsPage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [tab, setTab] = useState<'overview' | 'audit' | 'moderation'>('overview');
+  const [tab, setTab] = useState<'overview' | 'audit' | 'moderation' | 'verification'>('overview');
+
+  // Verification tab state
+  const [bills, setBills] = useState<any[]>([]);
+  const [selectedBill, setSelectedBill] = useState<any | null>(null);
+  const [confirmAction, setConfirmAction] = useState<'APPROVE' | 'REJECT' | null>(null);
+  const [actionNotes, setActionNotes] = useState('');
+  const [processingSubmit, setProcessingSubmit] = useState(false);
 
   useEffect(() => {
     const saved = sessionStorage.getItem('clearmed_admin_token');
     if (saved) { setToken(saved); loadData(saved); }
   }, []);
-
+  useEffect(() => {
+    if (tab === 'verification' && token) loadBills();
+  }, [tab, token]);
   const login = async () => {
     setLoginLoading(true); setLoginError('');
     try {
@@ -82,7 +91,32 @@ export default function AdminAnalyticsPage() {
       if (auditData.data) setAudit(auditData.data);
     } catch {} finally { setLoading(false); }
   };
+  const loadBills = async () => {
+    try {
+      const res = await fetch(`${API}/admin/ops/bills?status=BILL_PENDING,BILL_OCR_REVIEW`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.data) setBills(data.data);
+    } catch {}
+  };
 
+  const handleVerify = async () => {
+    if (!selectedBill || !confirmAction) return;
+    setProcessingSubmit(true);
+    try {
+      const res = await fetch(`${API}/admin/ops/bills/${selectedBill.id}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ action: confirmAction, notes: actionNotes })
+      });
+      if (res.ok) {
+        setBills(b => b.filter(x => x.id !== selectedBill.id));
+        setConfirmAction(null);
+        setSelectedBill(null);
+        setActionNotes('');
+        loadData(token); // refresh analytics
+      }
+    } catch {} finally { setProcessingSubmit(false); }
+  };
   if (!token) return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -116,7 +150,7 @@ export default function AdminAnalyticsPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-14">
               <div className="flex items-center gap-1">
-                {[{id:'overview',label:'Overview'},{id:'audit',label:'Audit Log'},{id:'moderation',label:'Moderation'}].map(t=>(
+                {[{id:'overview',label:'Overview'},{id:'verification',label:'Bill Verification'},{id:'audit',label:'Audit Log'},{id:'moderation',label:'Moderation'}].map(t=>(
                   <button key={t.id} onClick={()=>setTab(t.id as any)}
                     className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${tab===t.id?'bg-brand-50 text-brand-700':'text-gray-600 hover:bg-gray-50'}`}>
                     {t.label}
@@ -256,8 +290,153 @@ export default function AdminAnalyticsPage() {
               </div>
             </div>
           )}
+          {!loading && tab === 'verification' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Pending Bill Verifications</h2>
+                  <p className="text-sm text-gray-500">Review user uploaded bills against OCR extraction to verify data authenticity.</p>
+                </div>
+              </div>
+
+              {bills.length === 0 ? (
+                <div className="card p-12 text-center text-gray-400">
+                  <CheckCircle className="w-12 h-12 mx-auto mb-3 text-emerald-400 opacity-50" />
+                  <p className="font-medium text-gray-600">All caught up!</p>
+                  <p className="text-sm">There are no pending bills waiting for verification.</p>
+                </div>
+              ) : (
+                <div className="grid lg:grid-cols-2 gap-6">
+                  {/* List */}
+                  <div className="card overflow-hidden h-[600px] flex flex-col">
+                    <div className="overflow-y-auto p-4 space-y-3">
+                      {bills.map(b => (
+                        <div key={b.id} onClick={() => setSelectedBill(b)}
+                          className={`p-4 rounded-xl border cursor-pointer transition-colors ${selectedBill?.id === b.id ? 'bg-brand-50 border-brand-300' : 'bg-white border-gray-100 hover:border-brand-200'}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-semibold text-gray-900">{b.hospital?.name || 'Unknown'}</p>
+                              <p className="text-xs text-brand-600 font-medium">{b.treatment?.name || 'Unknown'}</p>
+                            </div>
+                            <span className="font-bold text-gray-900">₹{b.totalCost}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <span>{new Date(b.createdAt).toLocaleDateString('en-IN')} · {b.city}</span>
+                            <span className={`px-2 py-0.5 rounded-full font-medium ${b.ocrResult ? 'bg-blue-50 text-blue-600' : 'bg-gray-100 text-gray-600'}`}>
+                              {b.ocrResult ? 'AI Processed' : 'Manual'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Details Panel */}
+                  {selectedBill && (
+                    <div className="card p-6 h-[600px] overflow-y-auto relative flex flex-col">
+                      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                        <h3 className="font-bold text-lg text-gray-900">Bill Details</h3>
+                        <button onClick={() => setSelectedBill(null)} className="text-gray-400 hover:text-gray-600"><XCircle className="w-5 h-5"/></button>
+                      </div>
+
+                      <div className="space-y-6 flex-1">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-500 mb-1">Hospital</p>
+                            <p className="font-medium text-gray-900">{selectedBill.hospital?.name}</p>
+                            <p className="text-xs text-gray-500">{selectedBill.city}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 mb-1">Treatment</p>
+                            <p className="font-medium text-gray-900">{selectedBill.treatment?.name}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 mb-1">Dates</p>
+                            <p className="font-medium text-gray-900">{selectedBill.admissionDate ? new Date(selectedBill.admissionDate).toLocaleDateString('en-IN') : 'N/A'} - {selectedBill.dischargeDate ? new Date(selectedBill.dischargeDate).toLocaleDateString('en-IN') : 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-500 mb-1">Uploader</p>
+                            <p className="font-medium text-gray-900">{selectedBill.user?.name || 'Anonymous'}</p>
+                            <p className="text-xs text-gray-500">{selectedBill.user?.email}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <h4 className="font-bold text-gray-900 mb-3 text-sm">Cost Breakdown</h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between"><span className="text-gray-500">Room Charges</span><span className="font-medium">₹{selectedBill.roomCharges || 0}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Surgery Fee</span><span className="font-medium">₹{selectedBill.surgeryFee || 0}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Implant Cost</span><span className="font-medium">₹{selectedBill.implantCost || 0}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Pharmacy Cost</span><span className="font-medium">₹{selectedBill.pharmacyCost || 0}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Pathology/Radiology</span><span className="font-medium">₹{(selectedBill.pathologyCost||0) + (selectedBill.radiologyCost||0)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Taxes & Other</span><span className="font-medium">₹{(selectedBill.gst||0) + (selectedBill.otherCharges||0)}</span></div>
+                            <div className="pt-2 mt-2 border-t border-gray-200 flex justify-between font-bold text-brand-800">
+                              <span>Total Uploaded Cost</span><span>₹{selectedBill.totalCost}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {selectedBill.fileUrl && (
+                          <div>
+                            <a href={selectedBill.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 bg-brand-50 p-3 rounded-xl justify-center font-medium transition-colors">
+                              <Eye className="w-4 h-4" /> View Original Document
+                            </a>
+                          </div>
+                        )}
+                        
+                        {selectedBill.ocrResult && (
+                          <div className="text-xs text-gray-500 bg-blue-50 border border-blue-100 p-3 rounded-xl flex gap-3">
+                             <CheckCircle className="w-5 h-5 text-blue-500 shrink-0"/>
+                             <div>
+                              <p className="font-bold text-blue-800 mb-0.5">AI OCR Extraction info</p>
+                              <p>Confidence: {(selectedBill.ocrResult.confidence * 100).toFixed(1)}%</p>
+                              <p className="mt-1 opacity-75">Extracted data matches with the entered form fields as verified by the internal system. Look out for any stark anomalies.</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-4 border-t border-gray-100 flex gap-3 mt-4">
+                        <button onClick={() => setConfirmAction('REJECT')} className="flex-1 btn bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">Reject</button>
+                        <button onClick={() => setConfirmAction('APPROVE')} className="flex-1 btn btn-primary">Approve Bill</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmAction && selectedBill && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl leading-relaxed">
+            <h3 className={`text-lg font-bold mb-2 flex items-center gap-2 ${confirmAction === 'APPROVE' ? 'text-emerald-700' : 'text-red-700'}`}>
+              <AlertCircle className="w-5 h-5"/>
+              Confirm {confirmAction === 'APPROVE' ? 'Approval' : 'Rejection'}
+            </h3>
+            <p className="text-gray-600 text-sm mb-4">
+              Are you sure you want to {confirmAction.toLowerCase()} the bill for <strong>{selectedBill.hospital?.name}</strong>? This action will notify the user and {confirmAction === 'APPROVE' ? 'update the hospital averages.' : 'discard the bill from public stats.'}
+            </p>
+            <textarea 
+              placeholder="Optional notes for audit log..."
+              value={actionNotes}
+              onChange={e => setActionNotes(e.target.value)}
+              className="w-full input text-sm mb-6 bg-gray-50 border-gray-200"
+              rows={3}
+            />
+            <div className="flex gap-3">
+              <button disabled={processingSubmit} onClick={() => { setConfirmAction(null); setActionNotes(''); }} className="flex-1 btn btn-secondary text-sm">Cancel</button>
+              <button disabled={processingSubmit} onClick={handleVerify} className={`flex-1 btn text-sm justify-center ${confirmAction === 'APPROVE' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}>
+                {processingSubmit ? <Loader2 className="w-4 h-4 animate-spin"/> : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
