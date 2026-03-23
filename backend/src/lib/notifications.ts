@@ -111,7 +111,7 @@ export async function queueNotification(
 }
 
 // ── Send pending notifications (called by cron/worker) ────────────────────
-
+// FIX: was 'NOTIF_PENDING', correct enum value is 'PENDING'
 export async function sendPendingNotifications(limit = 50): Promise<void> {
   const pending = await prisma.notification.findMany({
     where: { status: 'PENDING', channel: 'EMAIL' },

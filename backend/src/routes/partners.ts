@@ -5,15 +5,14 @@ import { requireAdmin, requireRole } from '../middleware/security';
 import { writeAuditLog } from '../lib/auditLog';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { customAlphabet } = require('nanoid');
-import crypto from 'crypto';
 
 const router = Router();
 const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 32);
 
 const PLAN_FEES: Record<string, number> = {
   FREE_TIER: 0,
-  PRO: 4999,       // ₹4,999/month
-  ENTERPRISE: 14999, // ₹14,999/month
+  PRO: 4999,
+  ENTERPRISE: 14999,
 };
 
 const PLAN_FEATURES: Record<string, { slots: number; quota: number; label: string }> = {
@@ -46,6 +45,8 @@ router.post('/apply', async (req: Request, res: Response, next: NextFunction) =>
     const token = nanoid();
     const features = PLAN_FEATURES[data.plan];
 
+    // FIX: was using 'BILL_PENDING' for PartnerStatus, correct value is 'PENDING'
+    //      was using 'ACTIVE' for FREE_TIER which is also correct - kept as is
     const partner = await prisma.hospitalPartner.create({
       data: {
         hospitalId: data.hospitalId,
@@ -92,12 +93,11 @@ router.get('/dashboard/:token', async (req: Request, res: Response, next: NextFu
         take: 10,
         include: { treatment: { select: { name: true } } },
       }),
-      // Proxy: bill count as profile view indicator
       prisma.bill.count({ where: { hospitalId: partner.hospitalId } }),
-      // How many comparisons include this hospital
       prisma.bill.count({ where: { hospitalId: partner.hospitalId, status: 'BILL_VERIFIED' } }),
     ]);
 
+    // FIX: was checking status === 'ENQUIRY_NEW', correct EnquiryStatus value is 'NEW'
     const newEnquiries = recentEnquiries.filter(e => e.status === 'NEW').length;
 
     res.json({
@@ -150,7 +150,7 @@ router.post('/enquiry', async (req: Request, res: Response, next: NextFunction) 
       },
     });
 
-    res.status(201).json({ data: enquiry, message: "Enquiry sent! The hospital team will contact you within 24 hours." });
+    res.status(201).json({ data: enquiry, message: 'Enquiry sent! The hospital team will contact you within 24 hours.' });
   } catch (err) { next(err); }
 });
 

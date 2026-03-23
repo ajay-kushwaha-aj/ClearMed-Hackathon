@@ -33,7 +33,11 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
   }
 
   const hashed = crypto.createHash('sha256').update(key).digest('hex');
-  const apiKey = await prisma.apiKey.findUnique({ where: { hashedKey: hashed } });
+
+  // FIX: was findUnique({ where: { hashedKey: hashed } }) which Prisma rejects
+  // because the generated WhereUniqueInput type may not expose hashedKey directly.
+  // Using findFirst with a regular where clause is equivalent and always works.
+  const apiKey = await prisma.apiKey.findFirst({ where: { hashedKey: hashed } });
 
   if (!apiKey || apiKey.status !== 'ACTIVE') {
     res.status(401).json({ error: 'Invalid or inactive API key' });
@@ -55,7 +59,6 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
     return;
   }
 
-  // Increment usage + log
   const start = Date.now();
   await prisma.apiKey.update({
     where: { id: apiKey.id },
@@ -73,11 +76,9 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 // ── Cost percentile data ───────────────────────────────────────────────────
-// GET /api/b2b/costs/:treatmentSlug/:city
 router.get('/costs/:treatmentSlug/:city', apiKeyAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { treatmentSlug, city } = req.params;
-
     const treatment = await prisma.treatment.findUnique({ where: { slug: treatmentSlug } });
     if (!treatment) { res.status(404).json({ error: 'Treatment not found' }); return; }
 
@@ -91,7 +92,6 @@ router.get('/costs/:treatmentSlug/:city', apiKeyAuth, async (req: Request, res: 
     const costs = bills.map(b => b.totalCost).sort((a, b) => a - b);
     const govtCosts = bills.filter(b => b.hospital.type === 'GOVERNMENT').map(b => b.totalCost);
     const pvtCosts = bills.filter(b => b.hospital.type === 'PRIVATE').map(b => b.totalCost);
-
     const percentile = (arr: number[], p: number) => arr[Math.floor((p / 100) * arr.length)] || 0;
 
     res.json({
@@ -110,8 +110,8 @@ router.get('/costs/:treatmentSlug/:city', apiKeyAuth, async (req: Request, res: 
           max: Math.round(costs[costs.length - 1]),
         },
         byHospitalType: {
-          government: govtCosts.length > 0 ? { n: govtCosts.length, mean: Math.round(govtCosts.reduce((s,v)=>s+v,0)/govtCosts.length) } : null,
-          private: pvtCosts.length > 0 ? { n: pvtCosts.length, mean: Math.round(pvtCosts.reduce((s,v)=>s+v,0)/pvtCosts.length) } : null,
+          government: govtCosts.length > 0 ? { n: govtCosts.length, mean: Math.round(govtCosts.reduce((s, v) => s + v, 0) / govtCosts.length) } : null,
+          private: pvtCosts.length > 0 ? { n: pvtCosts.length, mean: Math.round(pvtCosts.reduce((s, v) => s + v, 0) / pvtCosts.length) } : null,
         },
         asOf: new Date().toISOString(),
       },
@@ -120,11 +120,9 @@ router.get('/costs/:treatmentSlug/:city', apiKeyAuth, async (req: Request, res: 
 });
 
 // ── Hospital outcome data ─────────────────────────────────────────────────
-// GET /api/b2b/outcomes/:hospitalId/:treatmentId
 router.get('/outcomes/:hospitalId/:treatmentId', apiKeyAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { hospitalId, treatmentId } = req.params;
-
     const [score, hospital, treatment] = await Promise.all([
       prisma.clearMedScore.findUnique({ where: { hospitalId_treatmentId: { hospitalId, treatmentId } } }),
       prisma.hospital.findUnique({ where: { id: hospitalId }, select: { name: true, city: true, type: true, naabhStatus: true } }),
@@ -193,7 +191,7 @@ router.post('/keys', requireAdmin, requireRole('SUPER_ADMIN'), async (req: Reque
   try {
     const { orgName, email, plan, name } = z.object({
       orgName: z.string(), email: z.string().email(),
-      plan: z.enum(["STARTER","PROFESSIONAL","ENTERPRISE"]).default("STARTER"),
+      plan: z.enum(['STARTER', 'PROFESSIONAL', 'ENTERPRISE']).default('STARTER'),
       name: z.string(),
     }).parse(req.body);
 

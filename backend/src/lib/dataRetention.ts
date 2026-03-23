@@ -1,10 +1,6 @@
 /**
  * Data Retention & Erasure — Phase 4
- * DPDP Act 2023 compliance:
- *   - Bills: 5 year retention
- *   - Reviews: 3 year retention
- *   - Symptom queries: 1 year retention
- *   - Right to Erasure: full deletion on request
+ * DPDP Act 2023 compliance
  */
 
 import prisma from './prisma';
@@ -13,27 +9,23 @@ import { writeAuditLog } from './auditLog';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// ── Retention periods ─────────────────────────────────────────────────────
 const RETENTION = {
-  bills: 5 * 365 * 24 * 60 * 60 * 1000,        // 5 years
-  reviews: 3 * 365 * 24 * 60 * 60 * 1000,       // 3 years
-  symptomQueries: 365 * 24 * 60 * 60 * 1000,    // 1 year
-  notifications: 90 * 24 * 60 * 60 * 1000,      // 90 days
-  auditLogs: 7 * 365 * 24 * 60 * 60 * 1000,     // 7 years (regulatory)
+  bills: 5 * 365 * 24 * 60 * 60 * 1000,
+  reviews: 3 * 365 * 24 * 60 * 60 * 1000,
+  symptomQueries: 365 * 24 * 60 * 60 * 1000,
+  notifications: 90 * 24 * 60 * 60 * 1000,
+  auditLogs: 7 * 365 * 24 * 60 * 60 * 1000,
 };
 
-// ── Purge expired data ────────────────────────────────────────────────────
 export async function runRetentionPurge(): Promise<Record<string, number>> {
   const now = Date.now();
   const results: Record<string, number> = {};
 
-  // Purge old unverified symptom queries
   const sqResult = await prisma.symptomQuery.deleteMany({
     where: { createdAt: { lt: new Date(now - RETENTION.symptomQueries) } },
   });
   results.symptomQueries = sqResult.count;
 
-  // Purge old notifications
   const nResult = await prisma.notification.deleteMany({
     where: {
       createdAt: { lt: new Date(now - RETENTION.notifications) },
@@ -42,11 +34,10 @@ export async function runRetentionPurge(): Promise<Record<string, number>> {
   });
   results.notifications = nResult.count;
 
-  // Purge old unverified/rejected bills (no point keeping rejected data long)
   const billResult = await prisma.bill.deleteMany({
     where: {
       status: 'BILL_REJECTED',
-      createdAt: { lt: new Date(now - 90 * 24 * 60 * 60 * 1000) }, // 90 days
+      createdAt: { lt: new Date(now - 90 * 24 * 60 * 60 * 1000) },
     },
   });
   results.rejectedBills = billResult.count;
@@ -55,7 +46,6 @@ export async function runRetentionPurge(): Promise<Record<string, number>> {
   return results;
 }
 
-// ── Right to Erasure ──────────────────────────────────────────────────────
 export async function processErasureRequest(
   userId: string,
   adminId: string
@@ -66,13 +56,11 @@ export async function processErasureRequest(
   const deleted: Record<string, number> = {};
 
   try {
-    // Delete in order (respect FK constraints)
     const [pts, reviews, notifications, queries, bills] = await Promise.all([
       prisma.pointsTransaction.deleteMany({ where: { userId } }),
       prisma.patientFeedback.deleteMany({ where: { userId } }),
       prisma.notification.deleteMany({ where: { userId } }),
       prisma.symptomQuery.deleteMany({ where: { userId } }),
-      // Anonymize bills (keep for cost data, but remove user link)
       prisma.bill.updateMany({
         where: { uploadedBy: userId },
         data: { uploadedBy: null, notes: '[USER ERASED]' },
@@ -85,7 +73,6 @@ export async function processErasureRequest(
     deleted.symptomQueries = queries.count;
     deleted.billsAnonymized = bills.count;
 
-    // Anonymize user record (don't delete — keep for referral integrity)
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -97,13 +84,12 @@ export async function processErasureRequest(
       },
     });
 
-    // Mark erasure request as processed
+    // FIX: was 'BILL_PENDING', ErasureRequest.status is a plain String, default is 'PENDING'
     await prisma.erasureRequest.updateMany({
-      where: { userId, status: 'BILL_PENDING' },
+      where: { userId, status: 'PENDING' },
       data: { status: 'COMPLETED', processedAt: new Date(), processedBy: adminId },
     });
 
-    // Write audit log
     await writeAuditLog({
       adminId,
       action: 'DATA_ERASURE',
@@ -113,7 +99,6 @@ export async function processErasureRequest(
       meta: deleted,
     });
 
-    // Delete uploaded files
     const uploadsDir = path.join(process.cwd(), 'uploads');
     const userDir = path.join(uploadsDir, userId);
     if (fs.existsSync(userDir)) {
@@ -129,7 +114,6 @@ export async function processErasureRequest(
   }
 }
 
-// ── Export user data (DPDP data portability) ──────────────────────────────
 export async function exportUserData(userId: string): Promise<Record<string, unknown>> {
   const [user, bills, reviews, points, queries] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true, city: true, createdAt: true, totalPoints: true } }),

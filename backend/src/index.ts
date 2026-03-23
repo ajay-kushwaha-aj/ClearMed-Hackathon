@@ -31,10 +31,28 @@ app.use(helmet({
 }));
 app.use(securityHeaders);
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? (process.env.FRONTEND_URL || 'https://clearmed.in') : true,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
+    const allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'https://clearmed.in',
+      'https://clearmedapp.vercel.app',
+    ].filter(Boolean) as string[];
+
+    const isVercelPreview = origin.endsWith('.vercel.app');
+    const isDev = process.env.NODE_ENV !== 'production';
+
+    if (isDev || isVercelPreview || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
   credentials: true,
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Api-Key'],
 }));
 
 // ── Body parsing ──────────────────────────────────────────────────────────

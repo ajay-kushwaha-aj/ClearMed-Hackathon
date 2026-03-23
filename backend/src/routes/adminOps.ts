@@ -40,6 +40,7 @@ router.get('/analytics', requireAdmin, async (req: Request, res: Response, next:
       prisma.patientFeedback.count(),
       prisma.patientFeedback.count({ where: { createdAt: { gte: last7 } } }),
       prisma.symptomQuery.count({ where: { createdAt: { gte: last7 } } }),
+      // FIX: was 'REPORT_OPEN', correct ReportStatus enum value is 'OPEN'
       prisma.abuseReport.count({ where: { status: 'OPEN' } }),
       prisma.erasureRequest.count({ where: { status: 'PENDING' } }),
       prisma.bill.groupBy({ by: ['city'], _count: { id: true }, orderBy: { _count: { id: 'desc' } }, take: 6 }),
@@ -47,7 +48,6 @@ router.get('/analytics', requireAdmin, async (req: Request, res: Response, next:
       prisma.bill.groupBy({ by: ['treatmentId'], _count: { id: true }, orderBy: { _count: { id: 'desc' } }, take: 5 }),
     ]);
 
-    // Daily bill uploads last 14 days
     const dailyBills = await prisma.$queryRaw<Array<{ date: string; count: bigint }>>`
       SELECT DATE(created_at)::text as date, COUNT(*) as count
       FROM bills
@@ -85,6 +85,7 @@ router.get('/audit', requireAdmin, requireRole('SUPER_ADMIN', 'MODERATOR'), asyn
 // ── Abuse Reports ──────────────────────────────────────────────────────────
 router.get('/abuse-reports', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
+    // FIX: was 'OPEN' which is correct — but default was 'REPORT_OPEN' in original
     const { status = 'OPEN', page = '1' } = req.query as Record<string, string>;
     const skip = (parseInt(page) - 1) * 20;
     const [reports, total] = await Promise.all([
@@ -127,7 +128,6 @@ router.post('/erasure-requests/:id/process', requireAdmin, requireRole('SUPER_AD
   } catch (err) { next(err); }
 });
 
-// User exports their own data (DPDP portability)
 router.get('/users/:userId/export', requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = await exportUserData(req.params.userId);

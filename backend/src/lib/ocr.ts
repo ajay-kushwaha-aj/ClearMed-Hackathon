@@ -21,17 +21,11 @@ export interface OcrOutput {
 // ── Tesseract OCR (local, no API key needed) ─────────────────────────────
 async function runTesseract(filePath: string): Promise<{ text: string; confidence: number }> {
   try {
-    // Dynamic import to avoid issues if tesseract not installed
     const { createWorker } = await import('tesseract.js');
     const worker = await createWorker('eng');
-
     const { data } = await worker.recognize(filePath);
     await worker.terminate();
-
-    return {
-      text: data.text,
-      confidence: (data.confidence || 0) / 100, // Normalize to 0–1
-    };
+    return { text: data.text, confidence: (data.confidence || 0) / 100 };
   } catch (err) {
     throw new Error(`Tesseract failed: ${(err as Error).message}`);
   }
@@ -54,11 +48,7 @@ async function runGoogleVision(filePath: string): Promise<{ text: string; confid
 
   const response = await fetch(
     `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    }
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) }
   );
 
   if (!response.ok) {
@@ -80,12 +70,7 @@ async function runGoogleVision(filePath: string): Promise<{ text: string; confid
   const annotation = result.responses?.[0]?.fullTextAnnotation;
   if (!annotation?.text) throw new Error('No text detected by Vision API');
 
-  const confidence = annotation.pages?.[0]?.confidence ?? 0.8;
-
-  return {
-    text: annotation.text,
-    confidence,
-  };
+  return { text: annotation.text, confidence: annotation.pages?.[0]?.confidence ?? 0.8 };
 }
 
 // ── Main OCR dispatcher ───────────────────────────────────────────────────
@@ -101,13 +86,9 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
 
   const ext = path.extname(filePath).toLowerCase();
   if (ext === '.pdf') {
-    // PDF: use a simplified text extraction approach
-    // In production, use pdf-parse or pdf2pic + OCR
-    // For now, we return a structured error for PDFs to go to manual review
     return createManualReviewOutput('PDF files are queued for manual review');
   }
 
-  // Try Tesseract first
   try {
     const result = await runTesseract(filePath);
     rawText = result.text;
@@ -115,8 +96,6 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
     engine = 'tesseract';
   } catch (tesseractErr) {
     console.warn('[OCR] Tesseract failed, trying Google Vision:', (tesseractErr as Error).message);
-
-    // Fallback to Google Vision
     try {
       const result = await runGoogleVision(filePath);
       rawText = result.text;
@@ -128,12 +107,8 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
     }
   }
 
-  // Run PII detection and removal
   const piiResult = detectAndRemovePii(rawText);
-
-  // Extract structured bill data from redacted text
   const extractedData = extractBillData(piiResult.redactedText);
-
   const processingMs = Date.now() - startTime;
 
   return {
@@ -147,7 +122,7 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
   };
 }
 
-function createManualReviewOutput(reason: string): OcrOutput {
+function createManualReviewOutput(_reason: string): OcrOutput {
   return {
     rawText: '',
     redactedText: '',
@@ -160,14 +135,13 @@ function createManualReviewOutput(reason: string): OcrOutput {
 }
 
 // ── Async OCR queue processor ─────────────────────────────────────────────
-// This runs OCR in the background after bill upload
 export async function processOcrInBackground(
   billId: string,
   filePath: string,
   prisma: import('@prisma/client').PrismaClient
 ): Promise<void> {
   try {
-    // Mark as processing
+    // FIX: was 'OCR_PROCESSING', correct OcrStatus enum value is 'PROCESSING'
     await prisma.ocrResult.upsert({
       where: { billId },
       update: { status: 'PROCESSING' },
@@ -177,11 +151,11 @@ export async function processOcrInBackground(
     const ocrOutput = await processImageWithOcr(filePath);
     const status = ocrOutput.engine === 'manual' ? 'MANUAL_REVIEW' : 'COMPLETED';
 
+    // FIX: removed 'rawText' which does not exist on OcrResult model
     await prisma.ocrResult.update({
       where: { billId },
       data: {
         status,
-        // rawText: ocrOutput.rawText.slice(0, 10000), // Limit storage
         extractedData: ocrOutput.extractedData as object,
         confidence: ocrOutput.confidence,
         piiRemoved: ocrOutput.piiFieldsFound.length > 0,
@@ -191,7 +165,6 @@ export async function processOcrInBackground(
       },
     });
 
-    // If OCR extracted cost data, auto-update the bill
     if (
       ocrOutput.extractedData.totalCost &&
       ocrOutput.confidence > 0.6 &&
@@ -209,7 +182,7 @@ export async function processOcrInBackground(
           admissionDate: d.admissionDate ? new Date(d.admissionDate) : undefined,
           dischargeDate: d.dischargeDate ? new Date(d.dischargeDate) : undefined,
           stayDays: d.stayDays,
-          status: 'BILL_OCR_REVIEW', // Needs human confirmation before VERIFIED
+          status: 'BILL_OCR_REVIEW',
         },
       });
     }
@@ -219,10 +192,7 @@ export async function processOcrInBackground(
     console.error(`[OCR] Failed for bill ${billId}:`, (err as Error).message);
     await prisma.ocrResult.update({
       where: { billId },
-      data: {
-        status: 'FAILED',
-        errorMessage: (err as Error).message,
-      },
+      data: { status: 'FAILED', errorMessage: (err as Error).message },
     }).catch(() => { });
   }
 }
