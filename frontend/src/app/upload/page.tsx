@@ -153,6 +153,14 @@ export default function UploadPage() {
       if (form.dischargeDate) fd.append('dischargeDate', form.dischargeDate);
       if (file) fd.append('bill', file);
 
+      const userStr = localStorage.getItem('clearmed_user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user.id) fd.append('userId', user.id);
+        } catch (e) {}
+      }
+
       const res = await billsAPI.upload(fd);
       if (res.data) setStep('success');
       else setError(res.error || 'Upload failed');
@@ -313,8 +321,13 @@ export default function UploadPage() {
 
               {/* Cost fields */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-3 block">
+                <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                   Bill Costs
+                  {file && !isExtracting && (
+                    <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">
+                      Extracted Preview - Please Verify
+                    </span>
+                  )}
                 </label>
                 
                 {/* Total Cost always required at the top */}

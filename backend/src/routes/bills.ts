@@ -70,6 +70,7 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
       otherCharges: z.coerce.number().optional(),
       admissionDate: z.string().optional(),
       dischargeDate: z.string().optional(),
+      userId: z.string().optional(),
     });
 
     const data = schema.parse(req.body);
@@ -140,6 +141,7 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
         admissionDate: data.admissionDate ? new Date(data.admissionDate) : undefined,
         dischargeDate: data.dischargeDate ? new Date(data.dischargeDate) : undefined,
         fileUrl,
+        uploadedBy: data.userId,
         status: 'BILL_PENDING',
       }
     });
