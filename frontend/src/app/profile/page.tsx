@@ -8,8 +8,7 @@ import {
     Shield, Copy, Check, ChevronRight, ArrowLeft, Loader2, FileText, LogOut, Edit3
 } from 'lucide-react';
 
-const isL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-const API = isL ? `http://${window.location.hostname}:4000/api` : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 interface ProfileData {
     id: string; name: string; email: string | null; phone: string | null;

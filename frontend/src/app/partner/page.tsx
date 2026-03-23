@@ -4,8 +4,7 @@ import { Building2, CheckCircle, Users, BarChart3, MessageSquare, TrendingUp, Lo
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-const isL = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-const API = isL ? `http://${window.location.hostname}:4000/api` : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api');
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 interface DashboardData {
   partner: { id: string; plan: string; isVerified: boolean; status: string; hospital: { name: string; city: string; rating?: number; _count: { bills: number; feedback: number } } };
