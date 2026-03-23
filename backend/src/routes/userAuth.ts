@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_test_key');
+const resend = new Resend(process.env.RESEND_API_KEY || process.env.SMTP_PASS || 're_test_key');
 
 const router = Router();
 function makeReferralCode(name: string): string {
@@ -85,7 +85,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
       console.log(`[AUTH] VERIFICATION OTP FOR ${email}: ${emailOtp}`);
       console.log(`=========================================\n`);
 
-      if (process.env.RESEND_API_KEY) {
+      if (process.env.RESEND_API_KEY || process.env.SMTP_PASS) {
         const { error: resendError } = await resend.emails.send({
           from: 'ClearMed <noreply@raktport.in>',
           to: email,
@@ -157,7 +157,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       console.log(`=========================================\n`);
 
       // Try to send email (may fail on Resend free tier for unverified domains)
-      if (process.env.RESEND_API_KEY && user.email) {
+      if ((process.env.RESEND_API_KEY || process.env.SMTP_PASS) && user.email) {
         resend.emails.send({
           from: 'ClearMed <noreply@raktport.in>',
           to: user.email,
@@ -313,7 +313,7 @@ router.post('/resend-verification', async (req: Request, res: Response, next: Ne
       console.log(`[AUTH] RESEND VERIFICATION OTP FOR ${user.email}: ${emailOtp}`);
       console.log(`=========================================\n`);
 
-      if (process.env.RESEND_API_KEY) {
+      if (process.env.RESEND_API_KEY || process.env.SMTP_PASS) {
         const { error: resendError } = await resend.emails.send({
           from: 'ClearMed <noreply@raktport.in>',
           to: user.email,
@@ -361,7 +361,7 @@ router.post('/forgot-password', async (req: Request, res: Response, next: NextFu
       console.log(`[AUTH] PASSWORD RESET OTP FOR ${user.email}: ${resetOtp}`);
       console.log(`=========================================\n`);
 
-      if (process.env.RESEND_API_KEY) {
+      if (process.env.RESEND_API_KEY || process.env.SMTP_PASS) {
         const { error: resendError } = await resend.emails.send({
           from: 'ClearMed <noreply@raktport.in>',
           to: user.email!,
