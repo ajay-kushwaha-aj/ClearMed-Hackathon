@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Heart, Eye, EyeOff, Loader2, ArrowRight, Lock, User, Phone, MapPin, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,6 +20,12 @@ export default function SignupPage() {
   const [otp, setOtp] = useState('');
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') || localStorage.getItem('clearmed_referral');
+    if (ref) set('referralCode', ref);
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();

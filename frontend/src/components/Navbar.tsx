@@ -37,6 +37,10 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
     try {
       const stored = localStorage.getItem('clearmed_user');
       if (stored) setUser(JSON.parse(stored));
+
+      const searchParams = new URLSearchParams(window.location.search);
+      const ref = searchParams.get('ref');
+      if (ref) localStorage.setItem('clearmed_referral', ref);
     } catch { }
     return () => window.removeEventListener('scroll', handler);
   }, []);
@@ -105,11 +109,18 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               )}
             </div>
 
-            {/* Mobile toggle */}
-            <button onClick={() => setOpen(!open)}
-              className={`lg:hidden p-2 rounded-xl transition-colors ${solid ? 'text-gray-600 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
-              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            {/* Mobile toggle & profile */}
+            <div className="flex items-center gap-2 lg:hidden">
+              {user && (
+                <Link href="/profile" className={`p-2 rounded-xl transition-colors ${solid ? 'text-gray-600 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
+                  <UserCircle className="w-5 h-5" />
+                </Link>
+              )}
+              <button onClick={() => setOpen(!open)}
+                className={`p-2 rounded-xl transition-colors ${solid ? 'text-gray-600 hover:bg-gray-100' : 'text-white hover:bg-white/10'}`}>
+                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
 
