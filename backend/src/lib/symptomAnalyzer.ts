@@ -76,7 +76,7 @@ export async function generateSymptomQuiz(symptoms: string): Promise<SymptomQuiz
   }
 }
 
-export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', answers?: {question: string, answer: string}[]): Promise<SymptomAnalysisResult> {
+export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', answers?: { question: string, answer: string }[]): Promise<SymptomAnalysisResult> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY environment variable is missing");
@@ -85,7 +85,7 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       generationConfig: {
         responseMimeType: 'application/json',
       },
@@ -101,11 +101,11 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', 
     let responseText = result.response.text();
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(responseText) as SymptomAnalysisResult;
-    
+
     if (!parsed.disclaimer) {
       parsed.disclaimer = 'This is NOT a medical diagnosis. Please consult a qualified doctor before making any healthcare decisions.';
     }
-    
+
     return parsed;
   } catch (error) {
     console.error("Gemini API Error:", error);
