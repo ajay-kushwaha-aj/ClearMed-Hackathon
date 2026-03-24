@@ -87,7 +87,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 
       if (process.env.RESEND_API_KEY || process.env.SMTP_PASS) {
         const { error: resendError } = await resend.emails.send({
-          from: 'ClearMed <noreply@raktport.in>',
+          from: 'ClearMed <noreply@clearmed.online>',
           to: email,
           subject: 'Verify your ClearMed account',
           html: `<p>Welcome to ClearMed!</p><p>Your verification code is: <strong style="font-size: 24px; color: #0f766e">${emailOtp}</strong></p><p>This code expires in 10 minutes.</p>`,
@@ -159,7 +159,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       // Try to send email (may fail on Resend free tier for unverified domains)
       if ((process.env.RESEND_API_KEY || process.env.SMTP_PASS) && user.email) {
         resend.emails.send({
-          from: 'ClearMed <noreply@raktport.in>',
+          from: 'ClearMed <noreply@clearmed.online>',
           to: user.email,
           subject: 'Verify your ClearMed account',
           html: `<p>Your verification code is: <strong style="font-size: 24px; color: #0f766e">${emailOtp}</strong></p><p>This code expires in 10 minutes.</p>`,
@@ -315,7 +315,7 @@ router.post('/resend-verification', async (req: Request, res: Response, next: Ne
 
       if (process.env.RESEND_API_KEY || process.env.SMTP_PASS) {
         const { error: resendError } = await resend.emails.send({
-          from: 'ClearMed <noreply@raktport.in>',
+          from: 'ClearMed <noreply@clearmed.online>',
           to: user.email,
           subject: 'Verify your ClearMed account',
           html: `<p>Welcome back!</p><p>Your new verification code is: <strong style="font-size: 24px; color: #0f766e">${emailOtp}</strong></p><p>This code expires in 10 minutes.</p>`,
@@ -363,7 +363,7 @@ router.post('/forgot-password', async (req: Request, res: Response, next: NextFu
 
       if (process.env.RESEND_API_KEY || process.env.SMTP_PASS) {
         const { error: resendError } = await resend.emails.send({
-          from: 'ClearMed <noreply@raktport.in>',
+          from: 'ClearMed <noreply@clearmed.online>',
           to: user.email!,
           subject: 'Password Reset Request',
           html: `<p>Your password reset code is: <strong style="font-size: 24px; color: #0f766e">${resetOtp}</strong></p><p>This code expires in 15 minutes. If you did not request this, please ignore this email.</p>`,
