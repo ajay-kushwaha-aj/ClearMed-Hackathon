@@ -86,7 +86,7 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { responseMimeType: 'application/json' } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', generationConfig: { responseMimeType: 'application/json' } });
 
     // Convert file to base64
     const base64 = req.file.buffer.toString('base64');
@@ -152,7 +152,7 @@ router.post('/chat', async (req: Request, res: Response, next: NextFunction) => 
       return;
     }
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
     const prompt = `You are a helpful, professional medical AI assistant.
 Answer the user's question regarding their medical report.
 Report details: ${JSON.stringify(reportContext)}
