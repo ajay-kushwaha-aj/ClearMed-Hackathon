@@ -58,7 +58,11 @@ export default function CommunityPage() {
         const hData = await hRes.json();
         const tData = await tRes.json();
         setHospitals(hData.data || []);
-        setTreatments(tData.data || []);
+        
+        // Flatten grouped treatments from backend
+        const tObj = tData.data || {};
+        const flatTreatments = Array.isArray(tObj) ? tObj : Object.values(tObj).flat();
+        setTreatments(flatTreatments);
       } catch (e) {}
     }
   };

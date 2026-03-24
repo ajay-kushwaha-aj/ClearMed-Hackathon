@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useCallback } from 'react';
-import { Upload, FileText, Loader2, AlertCircle, CheckCircle, ChevronDown, Globe, X, ArrowRight, Activity, FlaskConical, Stethoscope, ShieldAlert, Heart } from 'lucide-react';
+import { Upload, FileText, Loader2, AlertCircle, CheckCircle, ChevronDown, Globe, X, ArrowRight, Activity, FlaskConical, Stethoscope, ShieldAlert, Heart, MessageSquare } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -62,6 +62,9 @@ export default function ReportAnalyzerPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string}[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback((f: File) => {
@@ -113,6 +116,31 @@ export default function ReportAnalyzerPage() {
     setPreview('');
     setResult(null);
     setError('');
+    setChatMessages([]);
+    setChatInput('');
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || !result) return;
+    const msg = chatInput.trim();
+    setChatMessages(prev => [...prev, { role: 'user', text: msg }]);
+    setChatInput('');
+    setChatLoading(true);
+    try {
+      const res = await fetch(`${API}/reports/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, reportContext: result, language }),
+      });
+      const data = await res.json();
+      if (data.data?.reply) {
+        setChatMessages(prev => [...prev, { role: 'ai', text: data.data.reply }]);
+      }
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'ai', text: 'Error connecting to chatbot server.' }]);
+    } finally {
+      setChatLoading(false);
+    }
   };
 
   const urgency = urgencyConfig[result?.urgencyLevel || ''] || urgencyConfig.ROUTINE;
@@ -392,9 +420,53 @@ export default function ReportAnalyzerPage() {
                 </div>
               )}
 
-              {/* Disclaimer */}
               <div className="p-4 bg-gray-100 rounded-xl border border-gray-200">
                 <p className="text-xs text-gray-500 text-center italic">{result.disclaimer}</p>
+              </div>
+
+              {/* AI Chatbot */}
+              <div className="card p-5 border-brand-200 shadow-sm mt-8">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+                  <MessageSquare className="w-5 h-5 text-brand-500" /> Ask AI about this report
+                </h3>
+                
+                <div className="bg-gray-50 rounded-xl p-4 h-64 overflow-y-auto mb-4 space-y-4">
+                  {chatMessages.length === 0 ? (
+                    <div className="text-center text-gray-400 text-sm mt-10">
+                      Ask me anything about your report findings, medical terms, or recommendations!
+                    </div>
+                  ) : (
+                    chatMessages.map((msg, i) => (
+                      <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] rounded-2xl p-3 text-sm ${msg.role === 'user' ? 'bg-brand-500 text-white rounded-br-none' : 'bg-white border text-gray-800 rounded-bl-none shadow-sm'}`}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  {chatLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-white border text-gray-400 rounded-2xl p-3 text-sm rounded-bl-none shadow-sm flex gap-1">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Thinking...
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => { if(e.key === 'Enter') sendChatMessage(); }}
+                    placeholder="Type your question..."
+                    className="input flex-1 text-sm bg-white"
+                    disabled={chatLoading}
+                  />
+                  <button onClick={sendChatMessage} disabled={chatLoading} className="btn btn-primary px-4">
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
           )}

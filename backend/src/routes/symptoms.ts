@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { analyzeSymptoms } from '../lib/symptomAnalyzer';
+import { analyzeSymptoms, generateSymptomQuiz } from '../lib/symptomAnalyzer';
 import prisma from '../lib/prisma';
 import crypto from 'crypto';
 
@@ -16,15 +16,26 @@ const symptomLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+router.post('/quiz', symptomLimiter, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { symptoms } = z.object({ symptoms: z.string().min(3).max(500) }).parse(req.body);
+    const result = await generateSymptomQuiz(symptoms);
+    res.json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/analyze', symptomLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { symptoms, city } = z.object({
+    const { symptoms, city, answers } = z.object({
       symptoms: z.string().min(3).max(500),
       city: z.string().optional(),
+      answers: z.array(z.object({ question: z.string(), answer: z.string() })).optional(),
     }).parse(req.body);
 
     const startTime = Date.now();
-    const result = await analyzeSymptoms(symptoms, city);
+    const result = await analyzeSymptoms(symptoms, city, answers as {question: string, answer: string}[]);
 
     // Fetch matching hospitals grouped by specialists
     const departments = Array.from(new Set(result.specialists)).filter(Boolean) as string[];

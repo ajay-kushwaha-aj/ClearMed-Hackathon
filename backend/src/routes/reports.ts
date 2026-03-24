@@ -1,8 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import OpenAI from 'openai';
-import fs from 'fs';
-import path from 'path';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
 
@@ -65,7 +63,7 @@ Return your response as valid JSON with this exact structure:
   "disclaimer": "This is an AI-generated analysis for informational purposes only. Always consult a qualified healthcare professional for medical advice."
 }
 
-Be thorough — extract every test parameter visible in the report. If a value is abnormal, clearly explain why in the interpretation field.`;
+Be thorough — extract every test parameter visible in the report. If a value is abnormal, clearly explain why in the interpretation field. Keep the JSON structure strict and without markdown code blocks if possible.`;
 
 // ─── Analyze report ────────────────────────────────────────────────────────
 router.post('/analyze', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
@@ -81,41 +79,34 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
       return;
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      res.status(500).json({ error: 'OpenAI API key not configured on server.' });
+      res.status(500).json({ error: 'Gemini API key not configured on server.' });
       return;
     }
 
-    const openai = new OpenAI({ apiKey });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { responseMimeType: 'application/json' } });
 
     // Convert file to base64
     const base64 = req.file.buffer.toString('base64');
     const mimeType = req.file.mimetype;
-    const dataUrl = `data:${mimeType};base64,${base64}`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      max_tokens: 4096,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: buildPrompt(language) },
-            { type: 'image_url', image_url: { url: dataUrl, detail: 'high' } },
-          ],
-        },
-      ],
-    });
+    const filePart = {
+      inlineData: {
+        data: base64,
+        mimeType
+      }
+    };
 
-    const content = response.choices[0]?.message?.content || '';
+    const promptText = buildPrompt(language);
+
+    const result = await model.generateContent([promptText, filePart]);
+    let content = result.response.text();
 
     // Extract JSON from response (handle markdown code blocks)
-    let jsonStr = content;
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1].trim();
-    }
+    let jsonStr = content.trim();
+    jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
 
     let analysis;
     try {
@@ -147,6 +138,34 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
       return;
     }
     console.error('Report analysis error:', err);
+    next(err);
+  }
+});
+
+// ─── Chat about report ──────────────────────────────────────────────────────
+router.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { message, reportContext, language = 'en' } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ error: 'Gemini API Setup Missing' });
+      return;
+    }
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const prompt = `You are a helpful, professional medical AI assistant.
+Answer the user's question regarding their medical report.
+Report details: ${JSON.stringify(reportContext)}
+
+Respond entirely in ${SUPPORTED_LANGUAGES[language] || 'English'}.
+
+User Query: "${message}"
+
+Keep the answer concise and professional. Add a very short disclaimer that you are an AI.`;
+
+    const result = await model.generateContent(prompt);
+    res.json({ data: { reply: result.response.text() } });
+  } catch (err) {
     next(err);
   }
 });

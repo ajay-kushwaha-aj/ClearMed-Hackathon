@@ -64,23 +64,48 @@ export default function SymptomAnalyzerPage() {
   const [city, setCity] = useState('Delhi');
   const [result, setResult] = useState<SymptomResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<Array<{id: string, text: string}> | null>(null);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
 
-  const analyze = async (q = query) => {
+  const requestQuiz = async (q = query) => {
     if (q.trim().length < 3) return;
-    setLoading(true); setError(''); setResult(null); setExpandedIdx(null);
+    setLoading(true); setError(''); setResult(null); setQuizQuestions(null); setAnswers({}); setExpandedIdx(null);
     try {
+      const res = await fetch(`${API}/symptoms/quiz`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ symptoms: q }),
+      });
+      const data = await res.json();
+      if (data.data?.questions) setQuizQuestions(data.data.questions);
+      else setError(data.error || 'Failed to generate clarification questions');
+    } catch {
+      setError('Could not connect to server. Make sure the backend is running.');
+    } finally { setLoading(false); }
+  };
+
+  const submitFinalAnalysis = async () => {
+    setLoading(true); setError('');
+    try {
+      const formattedAnswers = quizQuestions?.map(q => ({
+        question: q.text,
+        answer: answers[q.id] || 'Not sure',
+      })) || [];
       const res = await fetch(`${API}/symptoms/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ symptoms: q, city }),
+        body: JSON.stringify({ symptoms: query, city, answers: formattedAnswers }),
       });
       const data = await res.json();
-      if (data.data) setResult(data.data);
+      if (data.data) {
+        setResult(data.data);
+        setQuizQuestions(null);
+      }
       else setError(data.error || 'Analysis failed');
     } catch {
-      setError('Could not connect to server. Make sure the backend is running.');
+      setError('Could not connect to server.');
     } finally { setLoading(false); }
   };
 
@@ -118,10 +143,11 @@ export default function SymptomAnalyzerPage() {
               <textarea
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analyze(); }}}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); requestQuiz(); }}}
                 placeholder="Describe your symptoms or doctor's recommendation..."
                 rows={3}
                 className="w-full resize-none text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none leading-relaxed"
+                disabled={loading || quizQuestions !== null}
               />
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-2">
@@ -131,12 +157,19 @@ export default function SymptomAnalyzerPage() {
                   </select>
                   <span className="text-xs text-gray-400 hidden sm:inline-flex items-center gap-1"><Info className="w-3 h-3"/> Use plain English or medical terms.</span>
                 </div>
-                <button onClick={() => analyze()} disabled={loading || query.length < 3}
-                  className="btn btn-primary btn-sm px-5">
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Search className="w-4 h-4"/>}
-                  {loading ? 'Analyzing...' : 'Analyze'}
-                  {!loading && <ArrowRight className="w-3.5 h-3.5 ml-0.5"/>}
-                </button>
+                {!quizQuestions && (
+                  <button onClick={() => requestQuiz()} disabled={loading || query.length < 3}
+                    className="btn btn-primary btn-sm px-5">
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Search className="w-4 h-4"/>}
+                    {loading ? 'Analyzing...' : 'Analyze'}
+                    {!loading && <ArrowRight className="w-3.5 h-3.5 ml-0.5"/>}
+                  </button>
+                )}
+                {quizQuestions && (
+                  <button onClick={() => {setQuizQuestions(null); setAnswers({}); setResult(null);}} className="text-sm font-semibold text-gray-500 hover:text-gray-700">
+                    Cancel
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -144,12 +177,12 @@ export default function SymptomAnalyzerPage() {
 
         <div className="max-w-3xl mx-auto px-4 py-8">
           {/* Examples */}
-          {!result && !loading && (
+          {!result && !loading && !quizQuestions && (
             <div className="mb-8">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Try an example</p>
               <div className="flex flex-wrap gap-2">
                 {EXAMPLES.map(e => (
-                  <button key={e} onClick={() => { setQuery(e); analyze(e); }}
+                  <button key={e} onClick={() => { setQuery(e); requestQuiz(e); }}
                     className="px-3 py-2 bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50 text-xs text-gray-600 hover:text-brand-700 rounded-xl transition-all">
                     {e}
                   </button>
@@ -178,9 +211,48 @@ export default function SymptomAnalyzerPage() {
           )}
 
           {error && (
-            <div className="card p-5 border-red-200 bg-red-50 text-center">
+            <div className="card p-5 border-red-200 bg-red-50 text-center mb-8">
               <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2"/>
               <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          {/* Quiz Section */}
+          {quizQuestions && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-white rounded-2xl p-6 border border-brand-200 shadow-sm border-t-4 border-t-brand-500">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-2">
+                  <Stethoscope className="w-6 h-6 text-brand-500" />
+                  Clarification Questions
+                </h2>
+                <p className="text-sm text-gray-500 mb-6">Please answer a few quick questions to help us narrow down the most accurate conditions.</p>
+                
+                <div className="space-y-5">
+                  {quizQuestions.map((q, i) => (
+                    <div key={q.id} className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                      <p className="font-semibold text-gray-800 mb-3">{i+1}. {q.text}</p>
+                      <div className="flex items-center gap-3">
+                        {['Yes', 'No', 'Not sure'].map(opt => (
+                          <button 
+                            key={opt}
+                            onClick={() => setAnswers(prev => ({ ...prev, [q.id]: opt }))}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors border ${answers[q.id] === opt ? 'bg-brand-100 border-brand-300 text-brand-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 flex justify-end">
+                  <button onClick={submitFinalAnalysis} disabled={loading} className="btn btn-primary px-6">
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4"/>}
+                    {loading ? 'Analyzing...' : 'Get Final Diagnosis'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
