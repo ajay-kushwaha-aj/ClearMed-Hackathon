@@ -77,23 +77,27 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar/>
       <div className="pt-16 pb-20 lg:pb-0">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-100 sticky top-16 z-40">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Dynamic Header */}
+        <div className="bg-gradient-to-r from-brand-600 via-blue-600 to-indigo-700 backdrop-blur-md sticky top-16 z-40 border-b border-brand-800/30 shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-brand-500"/> Cost Intelligence Dashboard
+                <h1 className="text-xl font-black text-white flex items-center gap-2 drop-shadow-sm">
+                  <BarChart3 className="w-6 h-6 text-brand-200"/> Cost Intelligence
                 </h1>
-                <p className="text-xs text-gray-500 mt-0.5">Real cost data from verified patient bills</p>
+                <p className="text-sm text-brand-100 mt-1 font-medium opacity-90">Real-time localized medical procedure costs</p>
               </div>
               <div className="flex gap-2">
-                <select value={treatment} onChange={e=>setTreatment(e.target.value)} className="input text-sm py-2 cursor-pointer flex-1 sm:flex-none">
-                  {TREATMENTS.map(t=><option key={t} value={t}>{t.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}</option>)}
-                </select>
-                <select value={city} onChange={e=>setCity(e.target.value)} className="input text-sm py-2 cursor-pointer w-28">
-                  {CITIES.map(c=><option key={c}>{c}</option>)}
-                </select>
+                <div className="relative flex-1 sm:flex-none">
+                  <select value={treatment} onChange={e=>setTreatment(e.target.value)} className="appearance-none w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold rounded-xl pl-4 pr-10 py-2.5 outline-none transition-all cursor-pointer backdrop-blur-sm">
+                    {TREATMENTS.map(t=><option key={t} value={t} className="text-gray-800">{t.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}</option>)}
+                  </select>
+                </div>
+                <div className="relative w-32">
+                  <select value={city} onChange={e=>setCity(e.target.value)} className="appearance-none w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold rounded-xl pl-4 pr-10 py-2.5 outline-none transition-all cursor-pointer backdrop-blur-sm">
+                    {CITIES.map(c=><option key={c} className="text-gray-800">{c}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -111,10 +115,10 @@ export default function DashboardPage() {
                 {emoji:'👥',v:stats.users,l:'Users'},
                 {emoji:'⭐',v:stats.reliableScores,l:'Scored Pairs'},
               ].map(s=>(
-                <div key={s.l} className="card p-3 text-center">
-                  <p className="text-base mb-0.5">{s.emoji}</p>
-                  <p className="text-xl font-black text-gray-900">{s.v}</p>
-                  <p className="text-[10px] text-gray-400">{s.l}</p>
+                <div key={s.l} className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100 hover:-translate-y-1 hover:shadow-md transition-all duration-300 group">
+                  <div className="w-10 h-10 mx-auto bg-gray-50 rounded-xl flex items-center justify-center text-lg mb-2 group-hover:scale-110 transition-transform">{s.emoji}</div>
+                  <p className="text-2xl font-black text-gray-900 tracking-tight">{s.v}</p>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mt-0.5">{s.l}</p>
                 </div>
               ))}
             </div>
@@ -126,67 +130,90 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-5">
               {/* Summary cards */}
-              <div className="grid sm:grid-cols-3 gap-4">
-                <div className="card p-5">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Average Cost in {city}</p>
-                  <p className="text-3xl font-black text-brand-700">{intel?.currentAvg ? fmt(intel.currentAvg) : '—'}</p>
+              <div className="grid sm:grid-cols-3 gap-5">
+                <div className="bg-gradient-to-br from-white to-blue-50/50 rounded-3xl p-6 shadow-sm border border-blue-100 relative overflow-hidden group hover:shadow-lg transition-all">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-brand-100/40 rounded-full blur-3xl -mr-16 -mt-16 transition-transform group-hover:scale-150"></div>
+                  <p className="text-xs font-bold text-brand-600 uppercase tracking-widest mb-2 relative z-10">Average Cost in {city}</p>
+                  <p className="text-4xl md:text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-blue-600 relative z-10 drop-shadow-sm">{intel?.currentAvg ? fmt(intel.currentAvg) : '—'}</p>
                   {intel?.trend12m ? (
-                    <div className={`flex items-center gap-1 mt-1 text-sm font-medium ${intel.trend12m > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                    <div className={`inline-flex items-center gap-1.5 mt-4 text-sm font-bold bg-white/60 backdrop-blur px-3 py-1.5 rounded-lg border relative z-10 ${intel.trend12m > 0 ? 'text-red-600 border-red-100 shadow-sm shadow-red-100/50' : 'text-emerald-600 border-emerald-100 shadow-sm shadow-emerald-100/50'}`}>
                       {intel.trend12m > 0 ? <TrendingUp className="w-4 h-4"/> : <TrendingDown className="w-4 h-4"/>}
-                      {Math.abs(intel.trend12m)}% in 12 months
+                      {Math.abs(intel.trend12m)}% vs last year
                     </div>
-                  ) : <p className="text-xs text-gray-400 mt-1">Upload bills to see trends</p>}
+                  ) : <p className="text-xs text-gray-400 mt-3 font-medium relative z-10">Upload bills to see trends</p>}
                 </div>
 
                 {intel?.govtVsPrivate ? (
-                  <div className="card p-5">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Govt vs Private</p>
-                    <div className="flex items-end gap-4">
-                      <div><p className="text-xs text-gray-400">Govt</p><p className="text-xl font-bold text-emerald-600">{fmt(intel.govtVsPrivate.govtAvg)}</p></div>
-                      <div><p className="text-xs text-gray-400">Private</p><p className="text-xl font-bold text-amber-600">{fmt(intel.govtVsPrivate.privateAvg)}</p></div>
+                  <div className="bg-gradient-to-br from-white to-emerald-50/30 rounded-3xl p-6 shadow-sm border border-emerald-100 relative overflow-hidden group hover:shadow-lg transition-all">
+                    <div className="absolute bottom-0 right-0 w-24 h-24 bg-emerald-100/50 rounded-full blur-3xl -mr-8 -mb-8 transition-transform group-hover:scale-150"></div>
+                    <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-4 relative z-10">Govt vs Private</p>
+                    <div className="flex gap-6 relative z-10">
+                      <div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Govt</p><p className="text-2xl font-black text-emerald-600">{fmt(intel.govtVsPrivate.govtAvg)}</p></div>
+                      <div className="w-px bg-gray-200"></div>
+                      <div><p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Private</p><p className="text-2xl font-black text-amber-500">{fmt(intel.govtVsPrivate.privateAvg)}</p></div>
                     </div>
-                    <p className="text-xs text-emerald-600 font-semibold mt-2">Save {fmt(intel.govtVsPrivate.saving)} at govt hospital</p>
+                    <div className="mt-4 pt-4 border-t border-emerald-50/50 relative z-10">
+                      <p className="text-sm text-emerald-700 font-bold flex items-center gap-1.5"><CheckCircle className="w-4 h-4"/> Save {fmt(intel.govtVsPrivate.saving)} at govt hospital</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="card p-5">
-                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Govt vs Private</p>
-                    <p className="text-sm text-gray-400">Data available after bills are uploaded</p>
-                    <Link href="/upload" className="text-xs text-brand-600 font-medium hover:underline mt-2 flex items-center gap-1">Upload a bill <ArrowUpRight className="w-3 h-3"/></Link>
+                  <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all group">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Govt vs Private</p>
+                    <p className="text-sm text-gray-500 font-medium my-4">Data becomes available when enough bills are uploaded.</p>
+                    <Link href="/upload" className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-4 py-2 rounded-xl transition-colors">Contribute Data <ArrowUpRight className="w-3.5 h-3.5"/></Link>
                   </div>
                 )}
 
-                <div className="card p-5">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Data Points</p>
-                  <p className="text-3xl font-black text-gray-900">{intel?.trends?.reduce((s,t)=>s+(t.sampleSize||0),0)||0}</p>
-                  <p className="text-xs text-gray-400 mt-1">verified patient bills</p>
-                  <Link href="/upload" className="text-xs text-brand-600 font-medium hover:underline mt-2 flex items-center gap-1">Contribute your bill <ArrowUpRight className="w-3 h-3"/></Link>
+                <div className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-6 shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-lg transition-all flex flex-col justify-between">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="relative z-10">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Confidence Score</p>
+                    <div className="flex items-baseline gap-2">
+                      <p className="text-4xl md:text-5xl font-black text-gray-900">{intel?.trends?.reduce((s,t)=>s+(t.sampleSize||0),0)||0}</p>
+                      <p className="text-sm font-semibold text-gray-400">bills</p>
+                    </div>
+                  </div>
+                  <Link href="/upload" className="inline-flex max-w-max items-center justify-between w-full mt-4 text-xs font-bold text-white bg-gray-900 hover:bg-gray-800 px-4 py-2.5 rounded-xl transition-all relative z-10 hover:shadow-md hover:-translate-y-0.5">
+                    Add your bill <ArrowUpRight className="w-3.5 h-3.5"/>
+                  </Link>
                 </div>
               </div>
 
               {/* Trend chart */}
-              <div className="card p-5">
-                <h3 className="font-bold text-gray-900 mb-4">
-                  Cost Trend — {treatment.replace(/-/g,' ').replace(/\b\w/g,l=>l.toUpperCase())} in {city}
-                </h3>
-                <TrendChart data={intel?.trends||[]}/>
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-black text-gray-900 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-brand-500"/>
+                    Cost Trend over Time
+                  </h3>
+                  <span className="badge badge-blue bg-blue-50 text-blue-700 font-bold px-3 py-1">In {city}</span>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <TrendChart data={intel?.trends||[]}/>
+                </div>
               </div>
 
               {/* City comparison */}
               {intel?.cityComparison && intel.cityComparison.length > 1 && (
-                <div className="card p-5">
-                  <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-brand-500"/> City Comparison
+                <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                  <h3 className="text-lg font-black text-gray-900 mb-6 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-emerald-500"/> Regional Comparison
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {intel.cityComparison.map(c=>{
                       const maxV = Math.max(...intel.cityComparison.map(x=>x.avg));
+                      const isCurrentCity = c.city === city;
                       return (
-                        <div key={c.city}>
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-gray-600 font-medium">{c.city}</span>
-                            <span className="font-bold text-gray-800">{fmt(c.avg)} <span className="text-gray-400 font-normal">({c.sampleSize} bills)</span></span>
+                        <div key={c.city} className="group cursor-default">
+                          <div className="flex justify-between text-sm mb-1.5">
+                            <span className={`font-semibold ${isCurrentCity ? 'text-brand-700' : 'text-gray-600'}`}>
+                              {c.city} {isCurrentCity && <span className="text-[10px] ml-1 bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Selected</span>}
+                            </span>
+                            <span className="font-black text-gray-800">{fmt(c.avg)} <span className="text-gray-400 font-medium text-xs ml-1">({c.sampleSize} bills)</span></span>
                           </div>
-                          <div className="h-2 bg-gray-100 rounded-full"><div className="h-full bg-brand-400 rounded-full" style={{width:`${(c.avg/maxV)*100}%`}}/></div>
+                          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-1000 ease-out ${isCurrentCity ? 'bg-gradient-to-r from-brand-400 to-brand-600' : 'bg-gray-300 group-hover:bg-gray-400'}`} style={{width:`${(c.avg/maxV)*100}%`}}/>
+                          </div>
                         </div>
                       );
                     })}

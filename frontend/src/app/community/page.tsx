@@ -4,6 +4,8 @@ import { Star, ThumbsUp, CheckCircle, SortAsc, MessageSquare, Upload } from 'luc
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+
 interface Review {
   id: string; overallScore: number; doctorScore?: number; facilityScore?: number;
   careScore?: number; costTransparency?: number; reviewText?: string;
@@ -34,10 +36,57 @@ const REVIEWS: Review[] = [
 export default function CommunityPage() {
   const [reviews, setReviews] = useState(REVIEWS);
   const [sort, setSort] = useState('helpful');
+  const [showModal, setShowModal] = useState(false);
+  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [treatments, setTreatments] = useState<any[]>([]);
+  const [form, setForm] = useState({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '' });
+  const [submitting, setSubmitting] = useState(false);
+
   const avg = reviews.reduce((s,r)=>s+r.overallScore,0)/reviews.length;
   const dist = [5,4,3,2,1].map(n=>({n,c:reviews.filter(r=>Math.round(r.overallScore)===n).length}));
   const sorted = [...reviews].sort((a,b)=>sort==='helpful'?b.helpfulVotes-a.helpfulVotes:sort==='rating_high'?b.overallScore-a.overallScore:sort==='rating_low'?a.overallScore-b.overallScore:new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
   const ago=(d:string)=>{const days=Math.floor((Date.now()-new Date(d).getTime())/86400000);return days<1?'Today':days===1?'Yesterday':days<30?`${days}d ago`:`${Math.floor(days/30)}mo ago`;};
+
+  const openModal = async () => {
+    setShowModal(true);
+    if (!hospitals.length) {
+      try {
+        const [hRes, tRes] = await Promise.all([
+          fetch(`${API}/hospitals?limit=100`),
+          fetch(`${API}/treatments?limit=100`)
+        ]);
+        const hData = await hRes.json();
+        const tData = await tRes.json();
+        setHospitals(hData.data || []);
+        setTreatments(tData.data || []);
+      } catch (e) {}
+    }
+  };
+
+  const submitReview = async () => {
+    if (!form.hospitalId || !form.treatmentId || !form.reviewText) return alert("Please fill all fields");
+    setSubmitting(true);
+    try {
+      const userStr = localStorage.getItem('clearmed_user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      const res = await fetch(`${API}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, userId: user?.id })
+      });
+      if (res.ok) {
+        setShowModal(false);
+        setForm({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '' });
+        alert('Review submitted successfully! It will appear once verified by moderators.');
+      } else {
+        alert('Failed to submit review');
+      }
+    } catch {
+      alert('Error submitting review');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -72,7 +121,7 @@ export default function CommunityPage() {
               <div className="card p-5 bg-gradient-to-br from-brand-50 to-teal-50 border-brand-100">
                 <h3 className="font-bold text-brand-900 mb-2">Share Your Experience</h3>
                 <p className="text-xs text-brand-700 mb-3">Earn <strong>30 points</strong> + Verified Patient badge when you link your bill.</p>
-                <Link href="/upload" className="btn btn-primary btn-sm w-full justify-center"><Upload className="w-3.5 h-3.5"/>Post a Review</Link>
+                <button onClick={openModal} className="btn btn-primary btn-sm w-full justify-center"><MessageSquare className="w-3.5 h-3.5"/>Post a Review</button>
               </div>
             </div>
             <div className="lg:col-span-3 space-y-4">
@@ -123,6 +172,61 @@ export default function CommunityPage() {
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl animate-fade-in relative max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-gray-900 mb-1">Post a Review</h2>
+            <p className="text-sm text-gray-500 mb-5">Share your medical experience to help others.</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">Hospital</label>
+                <select value={form.hospitalId} onChange={e=>setForm({...form, hospitalId: e.target.value})} className="input w-full text-sm py-2">
+                  <option value="">Select Hospital</option>
+                  {hospitals.map(h => <option key={h.id} value={h.id}>{h.name} - {h.city}</option>)}
+                </select>
+              </div>
+              
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">Treatment</label>
+                <select value={form.treatmentId} onChange={e=>setForm({...form, treatmentId: e.target.value})} className="input w-full text-sm py-2">
+                  <option value="">Select Treatment</option>
+                  {treatments.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">Overall Score ({form.overallScore}/5)</label>
+                <input type="range" min="1" max="5" value={form.overallScore} onChange={e=>setForm({...form, overallScore: parseInt(e.target.value)})} className="w-full accent-brand-500" />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">Review Details</label>
+                <textarea 
+                  rows={4} 
+                  placeholder="How was the doctor? Was the cost transparent?"
+                  value={form.reviewText}
+                  onChange={e=>setForm({...form, reviewText: e.target.value})}
+                  className="input w-full text-sm"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex gap-3 text-sm text-blue-800">
+                <CheckCircle className="w-5 h-5 shrink-0 text-blue-500"/>
+                <p>Want a <strong>Verified Patient</strong> badge? To get the badge, you must <Link href="/upload" className="font-bold underline">Upload your Bill</Link> instead. Your review will be attached automatically.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+              <button disabled={submitting} onClick={() => setShowModal(false)} className="flex-1 btn btn-secondary">Cancel</button>
+              <button disabled={submitting} onClick={submitReview} className="flex-1 btn btn-primary justify-center">
+                {submitting ? 'Submitting...' : 'Submit Review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

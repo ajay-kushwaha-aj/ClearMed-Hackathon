@@ -4,6 +4,12 @@ export interface SymptomAnalysisResult {
   conditions: Array<{
     name: string;
     likelihood: 'high' | 'moderate' | 'low';
+    matchConfidence: number;
+    icdCode?: string;
+    description: string;
+    prerequisites: string[];
+    recoveryTime: string;
+    department: string;
   }>;
   specialists: string[];
   treatments: string[];
@@ -15,14 +21,23 @@ export interface SymptomAnalysisResult {
 const SYSTEM_PROMPT = `You are a medical triage assistant.
 Analyze the user's symptoms and return a JSON object exactly matching this interface:
 {
-  "conditions": [{ "name": "string", "likelihood": "high" | "moderate" | "low" }],
+  "conditions": [{
+    "name": "string",
+    "likelihood": "high" | "moderate" | "low",
+    "matchConfidence": number (0-100),
+    "icdCode": "string (optional)",
+    "description": "string",
+    "prerequisites": ["string"],
+    "recoveryTime": "string",
+    "department": "string"
+  }],
   "specialists": ["string"],
   "treatments": ["string"],
   "urgency": "emergency" | "urgent" | "routine" | "elective",
   "disclaimer": "string",
   "searchQuery": "string"
 }
-Ensure the output is strictly valid JSON.`;
+Ensure the output is strictly valid JSON without markdown wrapping.`;
 
 export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi'): Promise<SymptomAnalysisResult> {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -42,7 +57,8 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi'):
     const prompt = `${SYSTEM_PROMPT}\n\nSymptoms: "${symptoms}"\nCity: ${city}`;
 
     const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    let responseText = result.response.text();
+    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(responseText) as SymptomAnalysisResult;
     
     if (!parsed.disclaimer) {
