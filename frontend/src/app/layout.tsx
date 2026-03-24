@@ -13,6 +13,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'ClearMed' }],
   robots: { index: true, follow: true },
   manifest: '/manifest.json',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   appleWebApp: { capable: true, statusBarStyle: 'default', title: 'ClearMed' },
   formatDetection: { telephone: false },
   openGraph: { type: 'website', locale: 'en_IN', siteName: 'ClearMed', title: 'ClearMed — Transparent Healthcare Costs', description: 'Compare verified hospital costs across India.' },
@@ -30,7 +34,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
