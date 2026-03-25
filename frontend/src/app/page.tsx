@@ -55,17 +55,21 @@ export default function HomePage() {
           </div>
 
           {/* CTA buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-            <Link href="/reports" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base">
-              <FileText className="w-5 h-5" /> Analyze Report
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8">
+            <Link href="/reports" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base font-medium">
+              <FileText className="w-5 h-5" /> Understand My Report
             </Link>
-            <Link href="/symptoms" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base">
+            <Link href="/symptoms" className="btn bg-white text-brand-700 hover:bg-brand-50 border border-transparent shadow-xl btn-lg w-full sm:w-auto justify-center text-base font-extrabold sm:scale-110 transition-transform">
               <Stethoscope className="w-5 h-5" /> Check Symptoms
             </Link>
-            <Link href="/insurance" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base">
-              <Shield className="w-5 h-5" /> Find Cashless Hospitals
+            <Link href="/insurance" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base font-medium">
+              <Shield className="w-5 h-5" /> Find Best Hospitals
             </Link>
           </div>
+          
+          <p className="mt-6 text-white/60 text-sm sm:text-base font-medium tracking-wide">
+            Start with symptoms or upload your report <ArrowRight className="inline w-4 h-4 mx-1 opacity-70 mb-0.5" /> get insights <ArrowRight className="inline w-4 h-4 mx-1 opacity-70 mb-0.5" /> find the right hospital
+          </p>
         </div>
       </section>
 
