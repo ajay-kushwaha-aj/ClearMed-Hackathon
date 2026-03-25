@@ -56,6 +56,15 @@ Return your response as valid JSON with this exact structure:
       "interpretation": "brief 1-line interpretation of this specific value"
     }
   ],
+  "overallAnalysis": {
+    "conditions": [
+      {
+        "name": "Condition Name",
+        "likelihood": "High | Moderate | Low"
+      }
+    ],
+    "topDepartment": "Medical department most relevant to the top condition (e.g., Cardiology, Hematology, General Medicine)"
+  },
   "summary": "A comprehensive 3-5 sentence summary of the overall report findings",
   "keyFindings": ["list of important findings that need attention"],
   "recommendations": ["list of actionable health recommendations based on the results"],

@@ -27,6 +27,10 @@ interface AnalysisResult {
   patientInfo?: { name?: string; age?: string; gender?: string; date?: string; referredBy?: string; labName?: string };
   reportType?: string;
   testResults?: TestResult[];
+  overallAnalysis?: {
+    conditions: { name: string; likelihood: string }[];
+    topDepartment: string;
+  };
   summary?: string;
   keyFindings?: string[];
   recommendations?: string[];
@@ -39,10 +43,9 @@ interface AnalysisResult {
 
 const statusColor = (s: string) => {
   switch (s?.toUpperCase()) {
-    case 'NORMAL': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
-    case 'HIGH': return 'bg-amber-100 text-amber-700 border-amber-200';
-    case 'LOW': return 'bg-blue-100 text-blue-700 border-blue-200';
-    case 'CRITICAL': return 'bg-red-100 text-red-700 border-red-200';
+    case 'HIGH': return 'bg-orange-50 text-orange-600 border-orange-200';
+    case 'LOW': return 'bg-red-50 text-red-600 border-red-200';
+    case 'CRITICAL': return 'bg-red-100 text-red-700 border-red-200 font-bold';
     default: return 'bg-gray-100 text-gray-600 border-gray-200';
   }
 };
@@ -335,44 +338,78 @@ export default function ReportAnalyzerPage() {
                 </div>
               )}
 
-              {/* Test Results */}
-              {result.testResults && result.testResults.length > 0 && (
+              {/* Abnormal Test Results */}
+              {result.testResults && result.testResults.filter(t => t.status?.toUpperCase() !== 'NORMAL').length > 0 && (
                 <div className="card overflow-hidden hover:shadow-lg transition-shadow duration-300">
                   <div className="px-5 py-4 bg-gray-50 border-b border-gray-100">
                     <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-                      <FlaskConical className="w-4 h-4 text-purple-500" /> Test Results ({result.testResults.length} parameters)
+                      <AlertCircle className="w-4 h-4 text-orange-500" /> Key Parameters (Abnormal)
                     </h3>
                   </div>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-50/50">
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Test</th>
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Value</th>
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reference</th>
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-                          <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Interpretation</th>
-                        </tr>
-                      </thead>
                       <tbody className="divide-y divide-gray-100">
-                        {result.testResults.map((t, i) => (
+                        {result.testResults.filter(t => t.status?.toUpperCase() !== 'NORMAL').map((t, i) => (
                           <tr key={i} className="hover:bg-brand-50/30 transition-colors group">
-                            <td className="px-4 py-3 font-medium text-gray-800">{t.testName}</td>
-                            <td className="px-4 py-3 font-bold text-gray-900">
-                              {t.value} <span className="text-xs text-gray-400 font-normal">{t.unit}</span>
+                            <td className="px-5 py-3.5 font-semibold text-gray-800 w-1/3">{t.testName}</td>
+                            <td className="px-5 py-3.5 font-bold text-gray-900">
+                              {t.value} <span className="text-xs text-gray-500 font-medium ml-1">{t.unit}</span>
                             </td>
-                            <td className="px-4 py-3 text-xs text-gray-500">{t.referenceRange}</td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-bold border ${statusColor(t.status)}`}>
+                            <td className="px-5 py-3.5 text-right">
+                              <span className={`inline-flex px-3 py-1 rounded-xl text-xs font-bold border ${statusColor(t.status)}`}>
                                 {t.status}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-xs text-gray-500 hidden sm:table-cell max-w-xs">{t.interpretation}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
+                </div>
+              )}
+              
+              {result.testResults && result.testResults.length > 0 && result.testResults.filter(t => t.status?.toUpperCase() !== 'NORMAL').length === 0 && (
+                 <div className="card p-5 bg-emerald-50 border-emerald-100 text-emerald-800 flex items-center gap-3">
+                   <CheckCircle className="w-6 h-6 text-emerald-500" />
+                   <div>
+                     <p className="font-bold">All Parameters Normal</p>
+                     <p className="text-sm mt-0.5 opacity-80">No abnormal findings were detected in the interpreted parameters.</p>
+                   </div>
+                 </div>
+              )}
+
+              {/* Overall Analysis */}
+              {result.overallAnalysis && result.overallAnalysis.conditions?.length > 0 && (
+                <div className="card p-5 bg-gradient-to-br from-indigo-50 to-purple-50 border-purple-100 hover:shadow-lg transition-shadow duration-300">
+                  <h3 className="text-sm font-bold text-indigo-800 uppercase tracking-wide mb-4 flex items-center gap-2">
+                    <Activity className="w-4 h-4" /> Overall Analysis
+                  </h3>
+                  <div className="grid sm:grid-cols-2 gap-3 mb-5">
+                    {result.overallAnalysis.conditions.map((c, i) => (
+                      <div key={i} className="bg-white p-3 rounded-xl border border-indigo-100/50 shadow-sm flex items-center justify-between">
+                        <span className="font-semibold text-gray-800 text-sm">{c.name}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-lg font-bold
+                          ${c.likelihood.toLowerCase() === 'high' ? 'bg-red-50 text-red-600' : 
+                            c.likelihood.toLowerCase() === 'moderate' ? 'bg-orange-50 text-orange-600' : 
+                            'bg-blue-50 text-blue-600'}`}>
+                          {c.likelihood}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {result.overallAnalysis.topDepartment && (
+                    <div className="mt-2 pt-4 border-t border-indigo-100/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div>
+                        <p className="text-xs text-indigo-600 font-bold uppercase tracking-wide mb-1">Recommended Department</p>
+                        <p className="text-lg font-black text-indigo-900">{result.overallAnalysis.topDepartment}</p>
+                      </div>
+                      <a href={`/search?q=${encodeURIComponent(result.overallAnalysis.topDepartment)}&type=department`} 
+                         className="btn bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto shadow-md">
+                        👉 Find Hospitals
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
 
