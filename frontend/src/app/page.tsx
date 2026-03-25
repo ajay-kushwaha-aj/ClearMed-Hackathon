@@ -45,14 +45,26 @@ export default function HomePage() {
             Know the real cost. Make smarter<br />
             <span className="text-teal-300">healthcare</span> decisions.
           </h1>
-          <p className="text-white/80 text-lg sm:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            <span className="font-semibold text-teal-200">Smarter Choices. Better Care.</span> ClearMed uses anonymized hospital bills uploaded by patients to generate real treatment cost insights. Earn points for contributing your bill.
+          <p className="text-white/80 text-lg sm:text-xl mb-6 max-w-2xl mx-auto leading-relaxed">
+            <span className="font-semibold text-teal-200">Smarter Choices. Better Care.</span> Built on real patient data. Analyze symptoms, understand reports, and choose the best hospital with confidence.
           </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-sm sm:text-base font-medium text-teal-100 mb-8 bg-white/5 border border-white/10 w-fit mx-auto px-5 py-2.5 rounded-full">
+            <span>🔒 Privacy Protected</span>
+            <span className="text-white/30">•</span>
+            <span>🧠 AI-Assisted</span>
+            <span className="text-white/30">•</span>
+            <span>📊 Real Patient Data</span>
+          </div>
 
           {/* Solid white search box */}
           <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-2xl max-w-3xl mx-auto">
             <SearchBar />
           </div>
+          
+          <p className="mt-4 text-white/80 text-sm sm:text-base font-medium tracking-wide">
+            Get cost insights, outcomes, and hospital recommendations in seconds.
+          </p>
 
           {/* CTA buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8">
@@ -63,10 +75,10 @@ export default function HomePage() {
               <Stethoscope className="w-5 h-5" /> Check Symptoms
             </Link>
             <Link href="/insurance" className="btn bg-white/15 hover:bg-white/25 text-white border border-white/30 btn-lg w-full sm:w-auto justify-center text-base font-medium">
-              <Shield className="w-5 h-5" /> Find Best Hospitals
+              <Shield className="w-5 h-5" /> Find Hospitals
             </Link>
           </div>
-          
+
           <p className="mt-6 text-white/60 text-sm sm:text-base font-medium tracking-wide">
             Start with symptoms or upload your report <ArrowRight className="inline w-4 h-4 mx-1 opacity-70 mb-0.5" /> get insights <ArrowRight className="inline w-4 h-4 mx-1 opacity-70 mb-0.5" /> find the right hospital
           </p>
