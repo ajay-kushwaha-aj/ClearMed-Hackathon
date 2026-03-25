@@ -42,8 +42,8 @@ export default function HomePage() {
             <span className="text-yellow-300">★</span> Powered by Real Patient Data
           </div>
           <h1 className="text-4xl sm:text-6xl font-bold text-white leading-tight mb-5">
-            Know the real cost of<br />
-            <span className="text-teal-300">healthcare</span> before you pay
+            Know the real cost. Make smarter<br />
+            <span className="text-teal-300">healthcare</span> decisions.
           </h1>
           <p className="text-white/80 text-lg sm:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
             <span className="font-semibold text-teal-200">Smarter Choices. Better Care.</span> ClearMed uses anonymized hospital bills uploaded by patients to generate real treatment cost insights. Earn points for contributing your bill.
