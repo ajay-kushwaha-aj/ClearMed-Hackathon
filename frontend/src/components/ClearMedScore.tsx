@@ -17,11 +17,11 @@ const SCORE_COLOR = (score: number) => {
 };
 
 const METRICS = [
-  { key: 'satisfactionScore',   label: 'Patient Satisfaction', weight: '25%', icon: '😊' },
+  { key: 'successRateScore',    label: 'Success Rate',         weight: '25%', icon: '✅' },
+  { key: 'satisfactionScore',   label: 'Patient Satisfaction', weight: '20%', icon: '😊' },
   { key: 'doctorScore',         label: 'Doctor Expertise',     weight: '20%', icon: '🩺' },
   { key: 'costEfficiencyScore', label: 'Cost Efficiency',      weight: '20%', icon: '💰' },
-  { key: 'successRateScore',    label: 'Success Rate',         weight: '20%', icon: '✅' },
-  { key: 'recoveryScore',       label: 'Recovery Speed',       weight: '10%', icon: '⚡' },
+  { key: 'recoveryScore',       label: 'Recovery Speed',       weight: '15%', icon: '⚡' },
 ];
 
 export default function ClearMedScore({ score, size = 'md', showBreakdown = false }: Props) {

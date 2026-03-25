@@ -10,8 +10,8 @@ import prisma from '../lib/prisma';
 import { hashPassword } from '../lib/auth';
 
 const ADMINS = [
-  { email: 'admin@clearmed.in', name: 'Super Admin', password: 'ClearMed@Admin2026', role: 'SUPER_ADMIN' as const },
-  { email: 'moderator@clearmed.in', name: 'Content Moderator', password: 'ClearMed@Mod2026', role: 'MODERATOR' as const },
+  { email: 'admin@clearmed.online', name: 'Super Admin', password: 'ClearMed@Admin2026', role: 'SUPER_ADMIN' as const },
+  { email: 'moderator@clearmed.online', name: 'Content Moderator', password: 'ClearMed@Mod2026', role: 'MODERATOR' as const },
 ];
 
 async function main() {

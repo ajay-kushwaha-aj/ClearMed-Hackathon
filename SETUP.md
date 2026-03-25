@@ -35,7 +35,7 @@ cd backend
 npm run seed
 npm run seed:admin
 ```
-> **Admin login:** `admin@clearmed.in` / `ClearMed@Admin2025!`
+> **Admin login:** `admin@clearmed.online` / `ClearMed@Admin2026`
 
 ### 5. Start the App
 **Windows:** Double-click `start-local.bat`
@@ -52,9 +52,9 @@ npm run dev
 ```
 
 ### 6. Open in Browser
-- **Website:** http://localhost:3000
-- **Admin Panel:** http://localhost:3000/admin/analytics
-- **API Health:** http://localhost:4000/health
+- **Website:** https://www.clearmed.online/
+- **Admin Panel:** https://www.clearmed.online/admin/analytics
+- **API Health:** https://www.clearmed.online/health
 
 ## Project Structure
 ```

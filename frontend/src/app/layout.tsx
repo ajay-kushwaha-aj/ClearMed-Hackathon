@@ -7,8 +7,8 @@ import PwaInstaller from '@/components/PwaInstaller';
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 export const metadata: Metadata = {
-  title: { default: 'ClearMed — Transparent Healthcare Costs', template: '%s | ClearMed' },
-  description: 'Compare verified hospital costs across India. Find the best hospital for your treatment with real patient data.',
+  title: { default: 'ClearMed — Smarter Choices. Better Care.', template: '%s | ClearMed' },
+  description: 'Smarter Choices. Better Care. Compare verified hospital costs across India. Find the best hospital for your treatment with real patient data.',
   keywords: ['hospital cost comparison India', 'treatment cost Delhi', 'healthcare transparency', 'best hospital India', 'cashless hospital insurance'],
   authors: [{ name: 'ClearMed' }],
   robots: { index: true, follow: true },

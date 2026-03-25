@@ -64,11 +64,14 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 shrink-0">
-              <Image src="/logo.png" alt="ClearMed" width={44} height={44} className="rounded-xl" />
-              <span className={`text-xl font-bold ${solid ? 'text-brand-800' : 'text-white'}`}>
-                Clear<span className={solid ? 'text-brand-500' : 'text-teal-300'}>Med</span>
-              </span>
+            <Link href="/" className="flex flex-col justify-center shrink-0">
+              <div className="flex items-center gap-2">
+                <Image src="/logo.png" alt="ClearMed" width={44} height={44} className="rounded-xl" />
+                <span className={`text-xl font-bold ${solid ? 'text-brand-800' : 'text-white'}`}>
+                  Clear<span className={solid ? 'text-brand-500' : 'text-teal-300'}>Med</span>
+                </span>
+              </div>
+              <span className={`text-[10.5px] hidden sm:block mt-0.5 ml-14 font-semibold tracking-wide ${solid ? 'text-brand-600/80' : 'text-teal-200/90'}`}>Smarter Choices. Better Care.</span>
             </Link>
 
             {/* Desktop nav */}

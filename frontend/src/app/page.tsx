@@ -46,7 +46,7 @@ export default function HomePage() {
             <span className="text-teal-300">healthcare</span> before you pay
           </h1>
           <p className="text-white/80 text-lg sm:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            Compare verified hospital costs. Check insurance coverage. Earn points for contributing your bill.
+            <span className="font-semibold text-teal-200">Smarter Choices. Better Care.</span> Compare verified hospital costs. Check insurance coverage. Earn points for contributing your bill.
           </p>
 
           {/* Solid white search box */}
@@ -253,6 +253,10 @@ export default function HomePage() {
             ))}
           </div>
           <div className="border-t border-gray-800 pt-6 flex flex-col items-center gap-4 text-center">
+            <div className="mb-2">
+              <h3 className="text-2xl font-bold text-white">Clear<span className="text-teal-400">Med</span></h3>
+              <p className="text-brand-300 font-medium text-sm mt-1 tracking-wide">Smarter Choices. Better Care.</p>
+            </div>
             <p className="text-gray-500 text-sm">© 2026 ClearMed Health Technologies Pvt. Ltd.</p>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
               <p>

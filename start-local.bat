@@ -29,7 +29,7 @@ echo   Network:  http://%IPv4%:3000
 echo   Admin:    http://localhost:3000/admin/analytics
 echo   API:      http://localhost:4000/health
 echo.
-echo   Login: admin@clearmed.in
+echo   Login: admin@clearmed.online
 echo   Pass:  ClearMed@Admin2026
 echo.
 pause

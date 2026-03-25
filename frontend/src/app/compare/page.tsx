@@ -9,7 +9,7 @@ import { hospitalsAPI, Hospital, formatCurrency } from '@/lib/api';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
-interface ScoreData { overall: number; satisfaction?: number; doctorExp?: number; costEfficiency?: number; successRate?: number; recoveryTime?: number; isReliable: boolean; dataPoints: number }
+interface ScoreData { overallScore: number; satisfactionScore?: number; doctorScore?: number; costEfficiencyScore?: number; successRateScore?: number; recoveryScore?: number; isReliable: boolean; dataPoints: number }
 
 export default function ComparePageWrapper() {
   return (
@@ -66,8 +66,8 @@ function ComparePageInner() {
       case 'score': {
         const s = scores[h.id];
         if (!s) return <span className="text-xs text-gray-400">Loading...</span>;
-        const color = s.overall>=8?'text-emerald-600':s.overall>=6.5?'text-brand-600':s.overall>=5?'text-amber-600':'text-red-500';
-        return <div className="flex items-center gap-2"><span className={`text-2xl font-black ${color}`}>{s.isReliable?s.overall.toFixed(1):'?'}</span><span className="text-xs text-gray-400">/10{!s.isReliable&&<><br/>Data limited</>}</span></div>;
+        const color = s.overallScore>=8?'text-emerald-600':s.overallScore>=6.5?'text-brand-600':s.overallScore>=5?'text-amber-600':'text-red-500';
+        return <div className="flex items-center gap-2"><span className={`text-2xl font-black ${color}`}>{s.isReliable?s.overallScore.toFixed(1):'?'}</span><span className="text-xs text-gray-400">/10{!s.isReliable&&<><br/>Data limited</>}</span></div>;
       }
       default: return '—';
     }
@@ -95,11 +95,11 @@ function ComparePageInner() {
     const s = scores[h.id];
     return [
       { label: 'Rating',   value: h.rating||0, max: 5 },
-      { label: 'Doctors',  value: Math.min(h._count?.doctors||0, 50), max: 50 },
-      { label: 'Satisfaction', value: s?.satisfaction||0, max: 2.5 },
-      { label: 'Cost Eff', value: s?.costEfficiency||0, max: 2.0 },
-      { label: 'Success',  value: s?.successRate||0, max: 2.0 },
-      { label: 'Recovery', value: s?.recoveryTime||0, max: 1.0 },
+      { label: 'Satisfaction', value: s?.satisfactionScore||0, max: 10 },
+      { label: 'Doctor Quality', value: s?.doctorScore||0, max: 10 },
+      { label: 'Cost Efficiency', value: s?.costEfficiencyScore||0, max: 10 },
+      { label: 'Success Rate',  value: s?.successRateScore||0, max: 10 },
+      { label: 'Recovery Speed', value: s?.recoveryScore||0, max: 10 },
     ];
   };
 

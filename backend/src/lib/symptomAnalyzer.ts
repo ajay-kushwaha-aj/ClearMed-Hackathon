@@ -64,7 +64,7 @@ export async function generateSymptomQuiz(symptoms: string): Promise<SymptomQuiz
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { responseMimeType: 'application/json' } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', generationConfig: { responseMimeType: 'application/json' } });
     const prompt = `${QUIZ_PROMPT}\n\nSymptoms: "${symptoms}"`;
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
@@ -85,7 +85,7 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         responseMimeType: 'application/json',
       },

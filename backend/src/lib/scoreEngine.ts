@@ -27,12 +27,11 @@ export interface ScoreBreakdown {
 }
 
 const WEIGHTS = {
-  satisfaction: 0.25,
+  successRate: 0.25,
+  satisfaction: 0.20,
   doctor: 0.20,
   costEfficiency: 0.20,
-  successRate: 0.20,
-  recovery: 0.10,
-  // NABH is a flat bonus, not weighted
+  recovery: 0.15,
 };
 
 const MIN_DATA_POINTS = 5;
@@ -165,13 +164,13 @@ export async function calculateClearMedScore(
   const naabhBonus = hospital?.naabhStatus ? 0.5 : 0;
 
   const rawScore =
+    successRateScore * WEIGHTS.successRate +
     satisfactionScore * WEIGHTS.satisfaction +
     doctorScore * WEIGHTS.doctor +
     costEfficiencyScore * WEIGHTS.costEfficiency +
-    successRateScore * WEIGHTS.successRate +
     recoveryScore * WEIGHTS.recovery;
 
-  const overallScore = Math.min(10, Math.max(0, rawScore + naabhBonus));
+  const overallScore = Math.min(10, Math.max(0, rawScore));
 
   return {
     overallScore: Math.round(overallScore * 10) / 10,
