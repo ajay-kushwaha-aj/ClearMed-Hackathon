@@ -39,14 +39,14 @@ export default function HomePage() {
         <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle,white 1px,transparent 1px)', backgroundSize: '28px 28px' }} />
         <div className="relative max-w-4xl mx-auto w-full">
           <div className="inline-flex items-center gap-2 badge bg-white/15 text-white border border-white/20 mb-6 text-sm">
-            <span className="text-yellow-300">★</span> Trusted by patients in Delhi, Mumbai & Bengaluru
+            <span className="text-yellow-300">★</span> Powered by Real Patient Data
           </div>
           <h1 className="text-4xl sm:text-6xl font-bold text-white leading-tight mb-5">
             Know the real cost of<br />
             <span className="text-teal-300">healthcare</span> before you pay
           </h1>
           <p className="text-white/80 text-lg sm:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-            <span className="font-semibold text-teal-200">Smarter Choices. Better Care.</span> Compare verified hospital costs. Check insurance coverage. Earn points for contributing your bill.
+            <span className="font-semibold text-teal-200">Smarter Choices. Better Care.</span> ClearMed uses anonymized hospital bills uploaded by patients to generate real treatment cost insights. Earn points for contributing your bill.
           </p>
 
           {/* Solid white search box */}
