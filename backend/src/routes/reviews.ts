@@ -5,6 +5,21 @@ import { awardPoints } from '../lib/pointsEngine';
 
 const router = Router();
 
+// In-memory rate limiting map: IP -> { count, resetTime }
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  let record = rateLimitMap.get(ip);
+  if (!record || now > record.resetTime) {
+    record = { count: 1, resetTime: now + 24 * 60 * 60 * 1000 };
+    rateLimitMap.set(ip, record);
+    return true;
+  }
+  if (record.count >= 5) return false;
+  record.count++;
+  return true;
+}
+
 // ── Submit review ─────────────────────────────────────────────────────────
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -24,6 +39,35 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     });
 
     const data = schema.parse(req.body);
+
+    // 1. Rate Limiting Check
+    const ip = req.ip || req.socket.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip)) {
+      res.status(429).json({ error: 'Too many reviews submitted today. Please try again tomorrow.' });
+      return;
+    }
+
+    // 2. Duplicate detection
+    if (data.reviewText) {
+      const duplicate = await prisma.patientFeedback.findFirst({
+        where: { reviewText: data.reviewText }
+      });
+      if (duplicate) {
+        res.status(400).json({ error: 'Duplicate review detected. This review has already been submitted.' });
+        return;
+      }
+    }
+
+    // 3. One Review per Treatment per User
+    if (data.userId) {
+      const existing = await prisma.patientFeedback.findFirst({
+        where: { hospitalId: data.hospitalId, treatmentId: data.treatmentId, userId: data.userId }
+      });
+      if (existing) {
+        res.status(429).json({ error: 'You have already reviewed this treatment at this hospital.' });
+        return;
+      }
+    }
 
     // Check if bill is verified (for Verified Patient badge)
     let isBillLinked = false;
@@ -107,7 +151,35 @@ router.get('/hospital/:hospitalId', async (req: Request, res: Response, next: Ne
         _avg: { overallScore: true, doctorScore: true, facilityScore: true, careScore: true, costTransparency: true },
         _count: { id: true },
       }),
+      prisma.patientFeedback.findMany({
+        where,
+        select: { overallScore: true, isBillLinked: true, userId: true }
+      })
     ]);
+
+    // Calculate advanced weighted score
+    let vSum = 0, vCount = 0;
+    let sSum = 0, sCount = 0;
+    let uSum = 0, uCount = 0;
+
+    const allScores = aggregates[1] || aggregates; // From the 4th promised array
+    allScores.forEach(r => {
+      if (r.isBillLinked) { vSum += r.overallScore; vCount++; }
+      else if (r.userId) { sSum += r.overallScore; sCount++; }
+      else { uSum += r.overallScore; uCount++; }
+    });
+
+    const vAvg = vCount > 0 ? vSum / vCount : 0;
+    const sAvg = sCount > 0 ? sSum / sCount : 0;
+    const uAvg = uCount > 0 ? uSum / uCount : 0;
+
+    let totalWeight = 0;
+    let weightedScore = 0;
+    if (vCount > 0) { totalWeight += 0.6; weightedScore += vAvg * 0.6; }
+    if (sCount > 0) { totalWeight += 0.3; weightedScore += sAvg * 0.3; }
+    if (uCount > 0) { totalWeight += 0.1; weightedScore += uAvg * 0.1; }
+
+    const finalRating = totalWeight > 0 ? (weightedScore / totalWeight) : 0;
 
     // Score distribution
     const distribution = await prisma.patientFeedback.groupBy({
@@ -120,6 +192,8 @@ router.get('/hospital/:hospitalId', async (req: Request, res: Response, next: Ne
       data: reviews,
       meta: {
         total,
+        verifiedCount: vCount,
+        finalRating: finalRating > 0 ? finalRating : (aggregates._avg.overallScore || 0),
         page: parseInt(page),
         totalPages: Math.ceil(total / parseInt(limit)),
         averages: aggregates._avg,

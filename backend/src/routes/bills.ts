@@ -72,6 +72,8 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
       admissionDate: z.string().optional(),
       dischargeDate: z.string().optional(),
       userId: z.string().optional(),
+      rating: z.coerce.number().optional(),
+      reviewText: z.string().optional(),
     });
 
     const data = schema.parse(req.body);
@@ -157,6 +159,20 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
       processOcrInBackground(bill.id, req.file.path, prisma);
     }
 
+    if (data.rating) {
+      await prisma.patientFeedback.create({
+        data: {
+          hospitalId: finalHospitalId,
+          treatmentId: finalTreatmentId,
+          userId: data.userId || null,
+          overallScore: data.rating,
+          reviewText: data.reviewText,
+          isBillLinked: true,
+          isVerified: false
+        }
+      });
+    }
+
     // Award points (non-blocking)
     let pointsEarned = 0;
     const userId = req.body.userId || bill.uploadedBy;
@@ -166,6 +182,10 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
       if (req.file) {
         const ocrResult = await awardPoints(userId, 'OCR_BILL', bill.id).catch(() => null);
         if (ocrResult) pointsEarned += ocrResult.pointsEarned;
+      }
+      if (data.rating) {
+        const revResult = await awardPoints(userId, 'REVIEW_POSTED', bill.id).catch(() => null);
+        if (revResult) pointsEarned += revResult.pointsEarned;
       }
     }
 

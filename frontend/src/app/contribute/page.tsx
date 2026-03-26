@@ -19,6 +19,8 @@ interface FormData {
   stayDays: string; city: string;
   file: File | null;
   consentGiven: boolean;
+  rating: number;
+  reviewText: string;
 }
 
 const CITIES = ['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
@@ -29,8 +31,9 @@ export default function ContributePage() {
     hospitalId: '', hospitalSearch: '', treatmentId: '', treatmentSearch: '',
     totalCost: '', roomCharges: '', surgeryFee: '', implantCost: '',
     pharmacyCost: '', otherCharges: '', stayDays: '', city: 'Delhi',
-    file: null, consentGiven: false,
+    file: null, consentGiven: false, rating: 0, reviewText: ''
   });
+  const [hoverStar, setHoverStar] = useState(0);
   const [hospitalOptions, setHospitalOptions] = useState<Array<{id:string;name:string;city:string}>>([]);
   const [treatmentOptions, setTreatmentOptions] = useState<Array<{id:string;name:string;category:string}>>([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +42,7 @@ export default function ContributePage() {
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const set = (k: keyof FormData, v: string | boolean | File | null) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: keyof FormData, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   const searchHospitals = async (q: string) => {
     set('hospitalSearch', q);
@@ -89,11 +92,15 @@ export default function ContributePage() {
       fd.append('stayDays', form.stayDays);
       fd.append('city', form.city);
       if (form.file) fd.append('bill', form.file);
+      if (form.rating > 0) fd.append('rating', form.rating.toString());
+      if (form.reviewText) fd.append('reviewText', form.reviewText);
 
       const res = await fetch(`${API}/bills/upload`, { method: 'POST', body: fd });
       const data = await res.json();
       if (data.data || data.bill) {
-        setSuccess({ points: form.file ? 75 : 50, message: 'Bill submitted successfully!' });
+        let earned = form.file ? 75 : 50;
+        if (form.rating > 0) earned += 20;
+        setSuccess({ points: earned, message: 'Bill submitted successfully!' });
       } else {
         setError(data.error || 'Submission failed');
       }
@@ -131,7 +138,7 @@ export default function ContributePage() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <button onClick={() => { setSuccess(null); setStep(0); setForm(f => ({ ...f, file: null, totalCost: '' })); }}
+            <button onClick={() => { setSuccess(null); setStep(0); setForm(f => ({ ...f, file: null, totalCost: '', rating: 0, reviewText: '' })); }}
               className="btn btn-primary btn-md">
               <Upload className="w-4 h-4"/> Submit Another Bill
             </button>
@@ -325,10 +332,38 @@ export default function ContributePage() {
                   {form.file && <div className="flex justify-between"><span className="text-gray-500">Bill attached</span><span className="text-emerald-600 font-medium">✓ {form.file.name}</span></div>}
                 </div>
 
+                <div className="bg-white border text-left border-gray-200 rounded-xl p-4 space-y-3 mt-4">
+                  <h3 className="font-semibold text-gray-800">Rate your experience (Optional)</h3>
+                  
+                  {/* Rating stars */}
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button 
+                        key={star} 
+                        type="button"
+                        onClick={() => set('rating', star)}
+                        onMouseEnter={() => setHoverStar(star)}
+                        onMouseLeave={() => setHoverStar(0)}
+                        className={`text-2xl ${star <= (hoverStar || form.rating) ? 'text-amber-400' : 'text-gray-200'} transition-colors`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+
+                  <textarea 
+                    value={form.reviewText} 
+                    onChange={e => set('reviewText', e.target.value)}
+                    placeholder="Share a brief review about the hospital, doctors, or treatment... (+20 pts)" 
+                    className="input w-full text-sm" 
+                    rows={3} 
+                  />
+                </div>
+
                 <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <span className="text-brand-700 font-medium text-sm">You'll earn</span>
-                    <span className="text-xl font-black text-brand-700">+{form.file ? 75 : 50} pts</span>
+                    <span className="text-xl font-black text-brand-700">+{form.file ? 75 : 50}{(form.rating > 0) ? ` (+20 pts review bonus)` : ''}</span>
                   </div>
                   <p className="text-xs text-brand-600 mt-1">+100 bonus pts when your bill is verified by our team</p>
                 </div>

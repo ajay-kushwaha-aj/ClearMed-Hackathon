@@ -22,9 +22,19 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
   if (!hospital) notFound();
 
   const topTreatment = hospital.hospitalTreatments[0];
-  const avgRating = hospital.feedback?.length
-    ? hospital.feedback.reduce((sum, f: {overallScore: number}) => sum + f.overallScore, 0) / hospital.feedback.length
-    : hospital.rating;
+  let avgRating = hospital.rating;
+  let verifiedCount = 0;
+  if (hospital.feedback?.length) {
+    let vSum=0,sSum=0,uSum=0,sCount=0,uCount=0;
+    hospital.feedback.forEach((f: any) => {
+      if(f.isBillLinked){vSum+=f.overallScore;verifiedCount++}
+      else if(f.userId){sSum+=f.overallScore;sCount++}
+      else{uSum+=f.overallScore;uCount++}
+    });
+    const tWt = (verifiedCount>0?0.6:0)+(sCount>0?0.3:0)+(uCount>0?0.1:0);
+    const wScore = ((verifiedCount>0?vSum/verifiedCount*0.6:0)+(sCount>0?sSum/sCount*0.3:0)+(uCount>0?uSum/uCount*0.1:0))/(tWt||1);
+    avgRating = tWt > 0 ? wScore : hospital.rating;
+  }
 
   const TYPE_COLOR: Record<string, string> = {
     GOVERNMENT: 'badge-green',
@@ -80,7 +90,7 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
                     <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
                     <span className="text-2xl font-bold text-gray-900">{avgRating?.toFixed(1) || '—'}</span>
                   </div>
-                  <p className="text-xs text-gray-400">{hospital._count.feedback} reviews</p>
+                  <p className="text-xs text-gray-400">{hospital._count.feedback} reviews • {verifiedCount} verified</p>
                 </div>
               </div>
 
@@ -228,6 +238,8 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
                     reviewText?: string;
                     recoveryDays?: number;
                     isVerified: boolean;
+                    isBillLinked: boolean;
+                    userId: string | null;
                     createdAt: string;
                   }) => (
                     <div key={f.id} className="p-4 rounded-xl bg-gray-50 border border-gray-100">
@@ -240,8 +252,12 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
                           </div>
                           <span className="text-sm font-medium text-gray-700">{f.overallScore.toFixed(1)}</span>
                         </div>
-                        {f.isVerified && (
-                          <span className="badge badge-green text-xs"><CheckCircle className="w-3 h-3" /> Verified Patient</span>
+                        {f.isBillLinked ? (
+                          <span className="badge badge-green text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3"/>Verified Patient</span>
+                        ) : f.userId ? (
+                          <span className="bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded text-xs flex items-center gap-1">🟡 Verified User</span>
+                        ) : (
+                          <span className="bg-gray-100 text-gray-600 font-medium px-2 py-0.5 rounded text-xs flex items-center gap-1">⚠️ Unverified Review</span>
                         )}
                       </div>
                       {f.reviewText && <p className="text-sm text-gray-600 leading-relaxed">{f.reviewText}</p>}

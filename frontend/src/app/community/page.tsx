@@ -41,10 +41,22 @@ export default function CommunityPage() {
   const [treatments, setTreatments] = useState<any[]>([]);
   const [form, setForm] = useState({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [filter, setFilter] = useState<'all'|'verified'>('all');
+  const [hoverStar, setHoverStar] = useState(0);
 
-  const avg = reviews.reduce((s,r)=>s+r.overallScore,0)/reviews.length;
+  let vSum=0,vCount=0,sSum=0,sCount=0,uSum=0,uCount=0;
+  reviews.forEach(r=>{
+    if(r.isBillLinked){vSum+=r.overallScore;vCount++}
+    else if(r.user){sSum+=r.overallScore;sCount++}
+    else{uSum+=r.overallScore;uCount++}
+  });
+  const tWt = (vCount>0?0.6:0)+(sCount>0?0.3:0)+(uCount>0?0.1:0);
+  const wScore = ((vCount>0?vSum/vCount*0.6:0)+(sCount>0?sSum/sCount*0.3:0)+(uCount>0?uSum/uCount*0.1:0))/(tWt||1);
+  const avg = tWt > 0 ? wScore : 0;
+
   const dist = [5,4,3,2,1].map(n=>({n,c:reviews.filter(r=>Math.round(r.overallScore)===n).length}));
   const sorted = [...reviews].sort((a,b)=>sort==='helpful'?b.helpfulVotes-a.helpfulVotes:sort==='rating_high'?b.overallScore-a.overallScore:sort==='rating_low'?a.overallScore-b.overallScore:new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime());
+  const filtered = sorted.filter(r => filter === 'all' || r.isBillLinked);
   const ago=(d:string)=>{const days=Math.floor((Date.now()-new Date(d).getTime())/86400000);return days<1?'Today':days===1?'Yesterday':days<30?`${days}d ago`:`${Math.floor(days/30)}mo ago`;};
 
   const openModal = async () => {
@@ -108,7 +120,7 @@ export default function CommunityPage() {
               <div className="card p-5 text-center">
                 <p className="text-5xl font-black text-gray-900 mb-1">{avg.toFixed(1)}</p>
                 <Stars score={avg} size="md"/>
-                <p className="text-xs text-gray-400 mt-1">{reviews.length} reviews</p>
+                <p className="text-xs text-brand-700 font-medium mt-1">Based on {reviews.length} reviews • {vCount} verified</p>
                 <div className="mt-4 space-y-1.5">
                   {dist.map(d=>(
                     <div key={d.n} className="flex items-center gap-2">
@@ -129,8 +141,14 @@ export default function CommunityPage() {
               </div>
             </div>
             <div className="lg:col-span-3 space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex bg-gray-100 p-1 rounded-lg">
+                  <button onClick={()=>setFilter('all')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${filter==='all'?'bg-white shadow text-gray-900':'text-gray-500 hover:text-gray-700'}`}>All Reviews</button>
+                  <button onClick={()=>setFilter('verified')} className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${filter==='verified'?'bg-white shadow text-gray-900':'text-gray-500 hover:text-gray-700'}`}>Verified Only</button>
+                </div>
+              </div>
               <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600"><strong>{reviews.length}</strong> reviews</p>
+                <p className="text-sm text-gray-600"><strong>{filtered.length}</strong> reviews</p>
                 <div className="flex items-center gap-2">
                   <SortAsc className="w-4 h-4 text-gray-400"/>
                   <select value={sort} onChange={e=>setSort(e.target.value)} className="input text-sm py-1.5 cursor-pointer">
@@ -141,14 +159,20 @@ export default function CommunityPage() {
                   </select>
                 </div>
               </div>
-              {sorted.map(r=>(
+              {filtered.map(r=>(
                 <div key={r.id} className="card p-5 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <div className="w-8 h-8 bg-brand-50 text-brand-600 rounded-lg flex items-center justify-center font-bold text-sm">{(r.user?.name||'A').charAt(0)}</div>
                         <div><p className="text-sm font-semibold text-gray-800">{r.user?.name||'Anonymous'}</p>{r.user?.city&&<p className="text-xs text-gray-400">{r.user.city}</p>}</div>
-                        {r.isBillLinked&&<span className="badge badge-green text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3"/>Verified Patient</span>}
+                        {r.isBillLinked ? (
+                          <span className="badge badge-green text-xs flex items-center gap-1"><CheckCircle className="w-3 h-3"/>Verified Patient</span>
+                        ) : r.user?.name ? (
+                          <span className="bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded text-xs flex items-center gap-1">🟡 Verified User</span>
+                        ) : (
+                          <span className="bg-gray-100 text-gray-600 font-medium px-2 py-0.5 rounded text-xs flex items-center gap-1">⚠️ Unverified Review</span>
+                        )}
                       </div>
                       <Stars score={r.overallScore} size="md"/>
                     </div>
@@ -202,7 +226,20 @@ export default function CommunityPage() {
 
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1 block">Overall Score ({form.overallScore}/5)</label>
-                <input type="range" min="1" max="5" value={form.overallScore} onChange={e=>setForm({...form, overallScore: parseInt(e.target.value)})} className="w-full accent-brand-500" />
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <button 
+                      key={star} 
+                      type="button"
+                      onClick={() => setForm({...form, overallScore: star})}
+                      onMouseEnter={() => setHoverStar(star)}
+                      onMouseLeave={() => setHoverStar(0)}
+                      className={`text-3xl transition-colors ${star <= (hoverStar || form.overallScore) ? 'text-amber-400' : 'text-gray-200'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
