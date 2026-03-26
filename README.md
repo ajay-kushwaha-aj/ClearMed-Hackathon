@@ -245,12 +245,12 @@ npm run trends:build    # Build cost trend charts
 
 Navigate to `/admin/analytics` and log in with the seeded credentials:
 
-| Role | Email | Password |
-|---|---|---|
-| Super Admin | admin@clearmed.online | ClearMed@Admin2026 |
-| Moderator | moderator@clearmed.online | ClearMed@Mod2026 |
+| Role |
+|---|
+| Super Admin | 
+| Moderator | 
 
-> ⚠️ **Change these passwords before any production deployment.**
+> ⚠️ **Change passwords before any production deployment.**
 
 ### Admin capabilities
 - **Overview** — KPI dashboard, bill status breakdown, daily charts
