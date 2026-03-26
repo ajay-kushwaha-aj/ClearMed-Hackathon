@@ -111,7 +111,7 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
       throw new Error(`Groq API Error: ${errText}`);
     }
 
-    const result = await groqResponse.json();
+    const result = await groqResponse.json() as any;
     let content = result.choices[0].message.content;
 
     let jsonStr = content.trim();
@@ -182,7 +182,7 @@ Keep the answer concise and professional.`;
       })
     });
 
-    const result = await response.json();
+    const result = await response.json() as any;
     res.json({ data: { reply: result.choices[0].message.content } });
   } catch (err) {
     next(err);
