@@ -65,7 +65,7 @@ export default function ReportAnalyzerPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string}[]>([]);
+  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string, suggestions?: string[]}[]>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -123,9 +123,9 @@ export default function ReportAnalyzerPage() {
     setChatInput('');
   };
 
-  const sendChatMessage = async () => {
-    if (!chatInput.trim() || !result) return;
-    const msg = chatInput.trim();
+  const sendChatMessage = async (presetMsg?: string) => {
+    const msg = presetMsg || chatInput.trim();
+    if (!msg || !result) return;
     setChatMessages(prev => [...prev, { role: 'user', text: msg }]);
     setChatInput('');
     setChatLoading(true);
@@ -137,7 +137,7 @@ export default function ReportAnalyzerPage() {
       });
       const data = await res.json();
       if (data.data?.reply) {
-        setChatMessages(prev => [...prev, { role: 'ai', text: data.data.reply }]);
+        setChatMessages(prev => [...prev, { role: 'ai', text: data.data.reply, suggestions: data.data.followUpQuestions }]);
       }
     } catch {
       setChatMessages(prev => [...prev, { role: 'ai', text: 'Error connecting to chatbot server.' }]);
@@ -474,10 +474,19 @@ export default function ReportAnalyzerPage() {
                     </div>
                   ) : (
                     chatMessages.map((msg, i) => (
-                      <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] rounded-2xl p-3 text-sm ${msg.role === 'user' ? 'bg-brand-500 text-white rounded-br-none' : 'bg-white border text-gray-800 rounded-bl-none shadow-sm'}`}>
+                      <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                        <div className={`max-w-[85%] rounded-2xl p-3 text-sm ${msg.role === 'user' ? 'bg-brand-500 text-white rounded-br-none' : 'bg-white border text-gray-800 rounded-bl-none shadow-sm whitespace-pre-wrap'}`}>
                           {msg.text}
                         </div>
+                        {msg.suggestions && msg.suggestions.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2 ml-1 animate-[fadeIn_0.5s_ease-out]">
+                            {msg.suggestions.map((s, idx) => (
+                              <button key={idx} onClick={() => sendChatMessage(s)} className="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 px-3 py-1.5 rounded-full transition-colors font-medium text-left">
+                                {s}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
@@ -500,7 +509,7 @@ export default function ReportAnalyzerPage() {
                     className="input flex-1 text-sm bg-white"
                     disabled={chatLoading}
                   />
-                  <button onClick={sendChatMessage} disabled={chatLoading} className="btn btn-primary px-4">
+                  <button onClick={() => sendChatMessage()} disabled={chatLoading} className="btn btn-primary px-4">
                     Send
                   </button>
                 </div>

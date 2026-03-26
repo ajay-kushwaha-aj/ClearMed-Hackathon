@@ -168,13 +168,22 @@ Follow these strict rules:
 1. Keep your answer CRISP, SHORT, and highly readable. Do not write a massive wall of text.
 2. Use a warm, human, conversational tone—as if you're a caring doctor chatting with a patient.
 3. Break your answer into short paragraphs (2-3 sentences max) to make it easy to digest.
-4. At the very end of your response, always provide 1 or 2 short, suggested "Follow-up questions you can ask me:" to keep the conversation engaging.
-5. Remind the patient gently to consult their actual doctor.
+4. Remind the patient gently to consult their actual doctor.
 
 Here are the patient's report details:
 ${JSON.stringify(reportContext)}
 
-IMPORTANT: Respond entirely and strictly in ${SUPPORTED_LANGUAGES[language] || 'English'}.`;
+IMPORTANT: You MUST return your response as a valid JSON object with EXACTLY this structure:
+{
+  "reply": "Your friendly, conversational response here. Use \\n\\n for paragraphs.",
+  "followUpQuestions": [
+    "A short, engaging follow-up question the user could ask you.",
+    "Another short follow-up question."
+  ]
+}
+
+DO NOT output any markdown blocks or plain text outside the JSON.
+Respond entirely in ${SUPPORTED_LANGUAGES[language] || 'English'}.`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -188,12 +197,23 @@ IMPORTANT: Respond entirely and strictly in ${SUPPORTED_LANGUAGES[language] || '
           { role: 'system', content: prompt },
           { role: 'user', content: message }
         ],
-        temperature: 0.5
+        temperature: 0.5,
+        response_format: { type: "json_object" }
       })
     });
 
     const result = await response.json() as any;
-    res.json({ data: { reply: result.choices[0].message.content } });
+    let content = result.choices[0].message.content;
+    let parsed;
+    try {
+      // In case the model wraps in markdown
+      content = content.replace(/```json/g, '').replace(/```/g, '').trim();
+      parsed = JSON.parse(content);
+    } catch {
+      parsed = { reply: content, followUpQuestions: [] };
+    }
+    
+    res.json({ data: parsed });
   } catch (err) {
     next(err);
   }
