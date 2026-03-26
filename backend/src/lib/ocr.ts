@@ -141,7 +141,7 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
       
       RULES:
       1. Map the hospital's location to the exact official Indian State name (e.g., "Delhi", "Maharashtra").
-      2. Identify the main treatment or surgery name.
+      2. Identify the main treatment or surgery name. Summarize it to be very short (maximum 3 to 4 words).
       3. Categorize costs accurately. If a cost is missing, return null. 
       4. Return ONLY valid JSON with this exact structure:
       {

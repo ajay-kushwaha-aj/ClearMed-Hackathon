@@ -212,6 +212,7 @@ model HospitalTreatment {
   avgCostEstimate Float?   @map("avg_cost_estimate")
   minCostEstimate Float?   @map("min_cost_estimate")
   maxCostEstimate Float?   @map("max_cost_estimate")
+  costBreakdown   Json?    @map("cost_breakdown")
   isAvailable     Boolean  @default(true) @map("is_available")
   createdAt       DateTime @default(now()) @map("created_at")
 

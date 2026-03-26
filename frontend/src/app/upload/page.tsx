@@ -46,6 +46,13 @@ const INDIA_CITIES: Record<string, string[]> = {
 type Step = 'hospital' | 'form' | 'success';
 
 export default function UploadPage() {
+  useEffect(() => {
+    if (!localStorage.getItem('clearmed_token')) {
+      alert('You must be logged in to upload a bill.');
+      window.location.href = '/login?redirect=/upload';
+    }
+  }, []);
+
   const [step, setStep] = useState<Step>('hospital');
   const [loading, setLoading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
@@ -67,8 +74,11 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
   const [form, setForm] = useState({
+    hospitalName: '', // NEW
+    doctorName: '',   // NEW
+    treatment: '',    // NEW
     state: '',
-    city: 'Delhi',
+    city: '',         // CHANGED from 'Delhi'
     totalCost: '',
     roomCharges: { qty: '', unitPrice: '', amount: '' },
     implantCost: { qty: '', unitPrice: '', amount: '' },
@@ -133,8 +143,26 @@ export default function UploadPage() {
 
         const safeStr = (val: any) => (val !== undefined && val !== null) ? String(val) : undefined;
 
+        // Auto-fill the specialized search states if the AI found them
+        if (d.hospitalName) {
+          setHospitalSearch(d.hospitalName);
+          // We don't set selectedHospital here because they still need to pick from the DB dropdown, 
+          // but pre-filling the search text makes it much easier!
+        }
+        if (d.treatmentName) {
+          setTreatmentSearch(d.treatmentName);
+        }
+
         setForm(prev => ({
           ...prev,
+          // --- Smart Text Fields ---
+          hospitalName: d.hospitalName || prev.hospitalName,
+          city: d.city || prev.city,
+          state: d.state || prev.state,
+          treatment: d.treatmentName || prev.treatment,
+          doctorName: d.doctorName || prev.doctorName,
+
+          // --- Numbers ---
           totalCost: safeStr(d.totalCost) ?? prev.totalCost,
           roomCharges: { ...prev.roomCharges, amount: safeStr(d.roomCharges) ?? prev.roomCharges.amount },
           implantCost: { ...prev.implantCost, amount: safeStr(d.implantCost) ?? prev.implantCost.amount },
@@ -144,6 +172,8 @@ export default function UploadPage() {
           radiologyCost: { ...prev.radiologyCost, amount: safeStr(d.radiologyCost) ?? prev.radiologyCost.amount },
           gst: { ...prev.gst, amount: safeStr(d.gst) ?? prev.gst.amount },
           otherCharges: { ...prev.otherCharges, amount: safeStr(d.otherCharges) ?? prev.otherCharges.amount },
+
+          // --- Dates ---
           admissionDate: d.admissionDate || prev.admissionDate,
           dischargeDate: d.dischargeDate || prev.dischargeDate,
         }));

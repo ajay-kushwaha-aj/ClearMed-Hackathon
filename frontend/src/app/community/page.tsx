@@ -64,6 +64,13 @@ export default function CommunityPage() {
   const ago=(d:string)=>{const days=Math.floor((Date.now()-new Date(d).getTime())/86400000);return days<1?'Today':days===1?'Yesterday':days<30?`${days}d ago`:`${Math.floor(days/30)}mo ago`;};
 
   const openModal = async () => {
+    const token = localStorage.getItem('clearmed_token');
+    if (!token) {
+      alert('You must be logged in to post a review.');
+      window.location.href = '/login?redirect=/community';
+      return;
+    }
+
     setShowModal(true);
     if (!hospitals.length) {
       try {

@@ -9,19 +9,19 @@ const DEPARTMENTS = [
 ];
 
 const LAST_NAMES = [
-  'Sharma', 'Gupta', 'Patel', 'Singh', 'Kumar', 'Rao', 'Reddy', 'Menon', 
+  'Sharma', 'Gupta', 'Patel', 'Singh', 'Kumar', 'Rao', 'Reddy', 'Menon',
   'Iyer', 'Joshi', 'Das', 'Chatterjee', 'Bose', 'Nair', 'Varghese', 'Chauhan'
 ];
 
 async function main() {
   const hospitals = await prisma.hospital.findMany({ include: { doctors: true } });
-  
+
   for (const hospital of hospitals) {
     if (hospital.doctors && hospital.doctors.length >= 3) {
       console.log(`Skipping ${hospital.name}, already has ${hospital.doctors.length} doctors`);
       continue;
     }
-    
+
     // Pick 3-5 random departments
     const shuffled = [...DEPARTMENTS].sort(() => 0.5 - Math.random());
     const selectedDepts = shuffled.slice(0, Math.floor(Math.random() * 3) + 3);

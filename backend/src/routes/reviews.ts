@@ -40,6 +40,11 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const data = schema.parse(req.body);
 
+    if (!data.userId) {
+      res.status(401).json({ error: 'You must be logged in to submit a review.' });
+      return;
+    }
+
     // 1. Rate Limiting Check
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
     if (!checkRateLimit(ip)) {
@@ -59,14 +64,12 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // 3. One Review per Treatment per User
-    if (data.userId) {
-      const existing = await prisma.patientFeedback.findFirst({
-        where: { hospitalId: data.hospitalId, treatmentId: data.treatmentId, userId: data.userId }
-      });
-      if (existing) {
-        res.status(429).json({ error: 'You have already reviewed this treatment at this hospital.' });
-        return;
-      }
+    const existing = await prisma.patientFeedback.findFirst({
+      where: { hospitalId: data.hospitalId, treatmentId: data.treatmentId, userId: data.userId }
+    });
+    if (existing) {
+      res.status(429).json({ error: 'You have already reviewed this treatment at this hospital.' });
+      return;
     }
 
     // Check if bill is verified (for Verified Patient badge)
@@ -102,9 +105,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     });
 
     // Award points for review
-    if (data.userId) {
-      await awardPoints(data.userId, 'REVIEW_POSTED', review.id).catch(() => {});
-    }
+    await awardPoints(data.userId, 'REVIEW_POSTED', review.id).catch(() => {});
 
     res.status(201).json({
       data: review,
@@ -160,24 +161,20 @@ router.get('/hospital/:hospitalId', async (req: Request, res: Response, next: Ne
     // Calculate advanced weighted score
     let vSum = 0, vCount = 0;
     let sSum = 0, sCount = 0;
-    let uSum = 0, uCount = 0;
 
     const allScores = aggregates[1] || aggregates; // From the 4th promised array
     allScores.forEach(r => {
       if (r.isBillLinked) { vSum += r.overallScore; vCount++; }
       else if (r.userId) { sSum += r.overallScore; sCount++; }
-      else { uSum += r.overallScore; uCount++; }
     });
 
     const vAvg = vCount > 0 ? vSum / vCount : 0;
     const sAvg = sCount > 0 ? sSum / sCount : 0;
-    const uAvg = uCount > 0 ? uSum / uCount : 0;
 
     let totalWeight = 0;
     let weightedScore = 0;
-    if (vCount > 0) { totalWeight += 0.6; weightedScore += vAvg * 0.6; }
+    if (vCount > 0) { totalWeight += 0.7; weightedScore += vAvg * 0.7; }
     if (sCount > 0) { totalWeight += 0.3; weightedScore += sAvg * 0.3; }
-    if (uCount > 0) { totalWeight += 0.1; weightedScore += uAvg * 0.1; }
 
     const finalRating = totalWeight > 0 ? (weightedScore / totalWeight) : 0;
 

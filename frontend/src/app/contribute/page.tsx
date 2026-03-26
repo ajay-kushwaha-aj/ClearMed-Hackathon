@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Upload, CheckCircle, AlertCircle, Loader2, FileText,
@@ -26,6 +26,13 @@ interface FormData {
 const CITIES = ['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Ahmedabad'];
 
 export default function ContributePage() {
+  useEffect(() => {
+    if (!localStorage.getItem('clearmed_token')) {
+      alert('You must be logged in to contribute.');
+      window.location.href = '/login?redirect=/contribute';
+    }
+  }, []);
+
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>({
     hospitalId: '', hospitalSearch: '', treatmentId: '', treatmentSearch: '',
