@@ -64,12 +64,13 @@ export async function generateSymptomQuiz(symptoms: string): Promise<SymptomQuiz
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', generationConfig: { responseMimeType: 'application/json' } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { responseMimeType: 'application/json' } });
     const prompt = `${QUIZ_PROMPT}\n\nSymptoms: "${symptoms}"`;
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(responseText) as SymptomQuiz;
+    const parsed = JSON.parse(responseText || '{}') as Partial<SymptomQuiz>;
+    return { questions: parsed.questions || [] };
   } catch (error) {
     console.error("Gemini Quiz API Error:", error);
     throw new Error("Failed to generate clarification questions");
@@ -85,7 +86,7 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-1.5-flash',
       generationConfig: {
         responseMimeType: 'application/json',
       },
@@ -100,13 +101,18 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', 
     const result = await model.generateContent(prompt);
     let responseText = result.response.text();
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    const parsed = JSON.parse(responseText) as SymptomAnalysisResult;
+    const parsed = JSON.parse(responseText || '{}') as Partial<SymptomAnalysisResult>;
 
-    if (!parsed.disclaimer) {
-      parsed.disclaimer = 'This is NOT a medical diagnosis. Please consult a qualified doctor before making any healthcare decisions.';
-    }
+    const safeParsed: SymptomAnalysisResult = {
+      conditions: parsed.conditions || [],
+      specialists: parsed.specialists || [],
+      treatments: parsed.treatments || [],
+      urgency: parsed.urgency || 'routine',
+      disclaimer: parsed.disclaimer || 'This is NOT a medical diagnosis. Please consult a qualified doctor before making any healthcare decisions.',
+      searchQuery: parsed.searchQuery || ''
+    };
 
-    return parsed;
+    return safeParsed;
   } catch (error) {
     console.error("Gemini API Error:", error);
     throw new Error("Failed to analyze symptoms");
