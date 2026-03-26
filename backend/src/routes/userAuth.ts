@@ -132,7 +132,12 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
       where: isEmail ? { email: normalizedIdentifier } : { phone: normalizedIdentifier },
     });
 
-    if (!user || !user.bio?.startsWith('__pwd__')) {
+    if (!user) {
+      res.status(404).json({ error: 'Account Does not exist, please create new Account' });
+      return;
+    }
+
+    if (!user.bio?.startsWith('__pwd__')) {
       res.status(401).json({ error: 'Invalid email/phone or password' });
       return;
     }
@@ -344,8 +349,8 @@ router.post('/forgot-password', async (req: Request, res: Response, next: NextFu
     });
 
     if (!user) {
-      // Return a vague success to not leak email addresses
-      res.json({ message: 'If that account exists, a reset code has been sent.' }); return;
+      res.status(404).json({ error: 'Account Does not exist, please create new Account' });
+      return;
     }
 
     const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();

@@ -25,29 +25,36 @@ export default function PwaInstaller() {
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setInstalled(true);
-      return;
+      // We don't return here so they can still enable alerts!
     }
 
     // Listen for install prompt
     const handler = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e as BeforeInstallPromptEvent);
-      // Show banner after 30 seconds
-      setTimeout(() => {
-        const wasDismissed = localStorage.getItem('clearmed_pwa_dismissed');
-        if (!wasDismissed) setShowBanner(true);
-      }, 30000);
     };
     window.addEventListener('beforeinstallprompt', handler);
+
+    // Show banner shortly after arrival
+    const timer = setTimeout(() => {
+      const wasDismissed = localStorage.getItem('clearmed_pwa_dismissed');
+      if (!wasDismissed) setShowBanner(true);
+    }, 1500);
 
     // Check notification permission
     if ('Notification' in window) setNotifPermission(Notification.permission);
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleInstall = async () => {
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      alert("To install: \n\niOS: Tap the Share button, then 'Add to Home Screen'.\n\nAndroid/Desktop: Use the browser menu to 'Install App' or 'Add to phone/desktop'.");
+      return;
+    }
     await installPrompt.prompt();
     const result = await installPrompt.userChoice;
     if (result.outcome === 'accepted') {
