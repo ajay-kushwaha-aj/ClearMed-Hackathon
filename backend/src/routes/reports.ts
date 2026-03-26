@@ -163,15 +163,18 @@ router.post('/chat', async (req: Request, res: Response, next: NextFunction) => 
 
     const prompt = `You are a friendly, empathetic, and highly knowledgeable medical assistant talking directly to a patient. 
 Your goal is to explain their medical report in simple, reassuring, and everyday language that anyone can easily understand. 
-Avoid dense medical jargon. If you must use a medical term, explain it simply. 
-Speak in a warm, human, conversational tone—as if you're a caring doctor explaining results to a patient face-to-face. 
-Do NOT just output robotic bulleted lists. Use natural, conversational paragraphs and keep it easy to digest.
+
+Follow these strict rules:
+1. Keep your answer CRISP, SHORT, and highly readable. Do not write a massive wall of text.
+2. Use a warm, human, conversational tone—as if you're a caring doctor chatting with a patient.
+3. Break your answer into short paragraphs (2-3 sentences max) to make it easy to digest.
+4. At the very end of your response, always provide 1 or 2 short, suggested "Follow-up questions you can ask me:" to keep the conversation engaging.
+5. Remind the patient gently to consult their actual doctor.
 
 Here are the patient's report details:
 ${JSON.stringify(reportContext)}
 
-IMPORTANT: Respond entirely and strictly in ${SUPPORTED_LANGUAGES[language] || 'English'}. 
-Always remind the patient gently to consult their actual doctor for a final diagnosis.`;
+IMPORTANT: Respond entirely and strictly in ${SUPPORTED_LANGUAGES[language] || 'English'}.`;
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',

@@ -32,6 +32,7 @@ const upload = multer({
 });
 
 // Extract bill data (preview mode)
+// Extract bill data (preview mode)
 router.post('/extract', upload.single('bill'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
@@ -40,11 +41,13 @@ router.post('/extract', upload.single('bill'), async (req: Request, res: Respons
     }
     const { processImageWithOcr } = await import('../lib/ocr');
     const ocrOutput = await processImageWithOcr(req.file.path);
-    // Unlink the file after extraction if we don't need it stored yet. Let's keep it in /uploads to reuse later?
-    // Actually, saving it in the final submission is cleaner, but let's leave it for now since multer saves it to disk. 
+
+    // FIX: Delete the temporary preview file immediately to save disk space
+    fs.unlink(req.file.path, () => { });
+
     res.json({ data: ocrOutput.extractedData });
   } catch (err) {
-    if (req.file) fs.unlink(req.file.path, () => {});
+    if (req.file) fs.unlink(req.file.path, () => { });
     next(err);
   }
 });
@@ -85,7 +88,7 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
       // Create a brand new hospital entry
       const baseSlug = data.newHospitalName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const uniqueSuffix = Math.random().toString(36).slice(2, 6);
-      
+
       const newHosp = await prisma.hospital.create({
         data: {
           name: data.newHospitalName,
@@ -110,7 +113,7 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
       // Create a brand new treatment entry
       const baseSlug = data.newTreatmentName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       const uniqueSuffix = Math.random().toString(36).slice(2, 6);
-      
+
       const newTreat = await prisma.treatment.create({
         data: {
           name: data.newTreatmentName,
@@ -199,7 +202,7 @@ router.post('/upload', upload.single('bill'), async (req: Request, res: Response
   } catch (err) {
     // Clean up uploaded file if DB save fails
     if (req.file) {
-      fs.unlink(req.file.path, () => {});
+      fs.unlink(req.file.path, () => { });
     }
     next(err);
   }

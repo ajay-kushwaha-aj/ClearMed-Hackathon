@@ -1,6 +1,6 @@
 /**
  * ClearMed OCR Engine — Phase 2
- * Primary: Tesseract.js (free, local)
+ * Primary: OCR.space (free cloud API)
  * Fallback: Google Vision API (paid, higher accuracy)
  */
 
@@ -23,44 +23,36 @@ async function runOcrSpace(filePath: string): Promise<{ text: string; confidence
   const apiKey = process.env.OCR_SPACE_API_KEY;
   if (!apiKey) throw new Error('OCR_SPACE_API_KEY not configured');
 
-  // Convert image to Base64 string
-  const ext = path.extname(filePath).toLowerCase();
-  let mimeType = 'image/jpeg';
-  if (ext === '.png') mimeType = 'image/png';
-  if (ext === '.pdf') mimeType = 'application/pdf';
+  const formData = new FormData();
+  formData.append('apikey', apiKey);
+  formData.append('isTable', 'true');
+  formData.append('OCREngine', '2'); // Engine 2 is much better for Bills and Receipts
 
-  const imageBytes = fs.readFileSync(filePath);
-  const base64Image = `data:${mimeType};base64,${imageBytes.toString('base64')}`;
+  // Read file from disk and convert to Blob to bypass Base64 size limits
+  const fileBuffer = fs.readFileSync(filePath);
+  let mimeType = 'application/octet-stream';
+  if (filePath.toLowerCase().endsWith('.pdf')) mimeType = 'application/pdf';
+  if (filePath.toLowerCase().endsWith('.png')) mimeType = 'image/png';
+  if (filePath.toLowerCase().endsWith('.jpg') || filePath.toLowerCase().endsWith('.jpeg')) mimeType = 'image/jpeg';
 
-  // Package the data for OCR.space
-  const params = new URLSearchParams();
-  params.append('apikey', apiKey);
-  params.append('base64Image', base64Image);
-  params.append('isTable', 'true'); // isTable=true is excellent for reading medical bills and aligning prices
+  const blob = new Blob([fileBuffer], { type: mimeType });
+  formData.append('file', blob, path.basename(filePath));
 
   const response = await fetch('https://api.ocr.space/parse/image', {
     method: 'POST',
-    body: params,
+    body: formData,
   });
 
-  if (!response.ok) {
-    throw new Error(`OCR.space HTTP error: ${response.statusText}`);
-  }
+  if (!response.ok) throw new Error(`OCR.space HTTP error: ${response.statusText}`);
 
-  const result = await response.json() as {
-    IsErroredOnProcessing: boolean;
-    ErrorMessage?: string[];
-    ParsedResults?: Array<{ ParsedText: string }>;
-  };
-
+  const result = await response.json() as any;
   if (result.IsErroredOnProcessing) {
     throw new Error(`OCR.space processing error: ${result.ErrorMessage?.[0]}`);
   }
 
-  const text = result.ParsedResults?.[0]?.ParsedText || '';
+  // Map through ALL pages of the bill, not just the first page
+  const text = result.ParsedResults?.map((page: any) => page.ParsedText).join('\n\n') || '';
 
-  // OCR.space doesn't provide an overall confidence score on the free tier, 
-  // so we return a standard 0.85 to allow your pipeline to proceed.
   return { text, confidence: 0.85 };
 }
 
@@ -111,16 +103,13 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
   const startTime = Date.now();
   let rawText = '';
   let confidence = 0;
-  let engine: OcrOutput['engine'] = 'tesseract';
+  let engine: OcrOutput['engine'] = 'ocr_space'; // Defaulting to ocr_space
 
   if (!fs.existsSync(filePath)) {
     throw new Error(`File not found: ${filePath}`);
   }
 
-  const ext = path.extname(filePath).toLowerCase();
-  if (ext === '.pdf') {
-    return createManualReviewOutput('PDF files are queued for manual review');
-  }
+  // NOTE: We completely removed the PDF block here so OCR.space can read them!
 
   try {
     // 1. Try OCR.space first
@@ -176,7 +165,6 @@ export async function processOcrInBackground(
   prisma: import('@prisma/client').PrismaClient
 ): Promise<void> {
   try {
-    // FIX: was 'OCR_PROCESSING', correct OcrStatus enum value is 'PROCESSING'
     await prisma.ocrResult.upsert({
       where: { billId },
       update: { status: 'PROCESSING' },
@@ -186,7 +174,6 @@ export async function processOcrInBackground(
     const ocrOutput = await processImageWithOcr(filePath);
     const status = ocrOutput.engine === 'manual' ? 'MANUAL_REVIEW' : 'COMPLETED';
 
-    // FIX: removed 'rawText' which does not exist on OcrResult model
     await prisma.ocrResult.update({
       where: { billId },
       data: {

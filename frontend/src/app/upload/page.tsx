@@ -117,17 +117,21 @@ export default function UploadPage() {
       const res = await billsAPI.extract(fd);
       if (res.data) {
         const d = res.data;
+
+        // FIX: Safely convert to string, ensuring '0' doesn't get ignored
+        const safeStr = (val: any) => (val !== undefined && val !== null) ? String(val) : undefined;
+
         setForm(prev => ({
           ...prev,
-          totalCost: d.totalCost ? String(d.totalCost) : prev.totalCost,
-          roomCharges: { ...prev.roomCharges, amount: d.roomCharges ? String(d.roomCharges) : prev.roomCharges.amount },
-          implantCost: { ...prev.implantCost, amount: d.implantCost ? String(d.implantCost) : prev.implantCost.amount },
-          surgeryFee: { ...prev.surgeryFee, amount: d.surgeryFee ? String(d.surgeryFee) : prev.surgeryFee.amount },
-          pharmacyCost: { ...prev.pharmacyCost, amount: d.pharmacyCost ? String(d.pharmacyCost) : prev.pharmacyCost.amount },
-          pathologyCost: { ...prev.pathologyCost, amount: d.pathologyCost ? String(d.pathologyCost) : prev.pathologyCost.amount },
-          radiologyCost: { ...prev.radiologyCost, amount: d.radiologyCost ? String(d.radiologyCost) : prev.radiologyCost.amount },
-          gst: { ...prev.gst, amount: d.gst ? String(d.gst) : prev.gst.amount },
-          otherCharges: { ...prev.otherCharges, amount: d.otherCharges ? String(d.otherCharges) : prev.otherCharges.amount },
+          totalCost: safeStr(d.totalCost) ?? prev.totalCost,
+          roomCharges: { ...prev.roomCharges, amount: safeStr(d.roomCharges) ?? prev.roomCharges.amount },
+          implantCost: { ...prev.implantCost, amount: safeStr(d.implantCost) ?? prev.implantCost.amount },
+          surgeryFee: { ...prev.surgeryFee, amount: safeStr(d.surgeryFee) ?? prev.surgeryFee.amount },
+          pharmacyCost: { ...prev.pharmacyCost, amount: safeStr(d.pharmacyCost) ?? prev.pharmacyCost.amount },
+          pathologyCost: { ...prev.pathologyCost, amount: safeStr(d.pathologyCost) ?? prev.pathologyCost.amount },
+          radiologyCost: { ...prev.radiologyCost, amount: safeStr(d.radiologyCost) ?? prev.radiologyCost.amount },
+          gst: { ...prev.gst, amount: safeStr(d.gst) ?? prev.gst.amount },
+          otherCharges: { ...prev.otherCharges, amount: safeStr(d.otherCharges) ?? prev.otherCharges.amount },
           admissionDate: d.admissionDate || prev.admissionDate,
           dischargeDate: d.dischargeDate || prev.dischargeDate,
         }));
@@ -293,7 +297,7 @@ export default function UploadPage() {
                   Step 1: Upload Bill
                 </label>
                 <p className="text-sm text-gray-500 mb-4">We will automatically extract the data for you.</p>
-                
+
                 {file ? (
                   <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
                     <div className="flex items-center gap-3">
@@ -342,260 +346,260 @@ export default function UploadPage() {
                     <p className="text-sm text-gray-500">Please review the AI extracted details below. You can correct any inaccurate information.</p>
                   </div>
 
-              {/* Hospital */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Hospital <span className="text-red-500">*</span>
-                </label>
-                {isNewHospital ? (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
+                  {/* Hospital */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Hospital <span className="text-red-500">*</span>
+                    </label>
+                    {isNewHospital ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
+                          <div>
+                            <p className="text-sm font-medium text-brand-800">Add Custom Hospital</p>
+                            <p className="text-xs text-brand-600">This hospital will be permanently added to {form.city}</p>
+                          </div>
+                          <button onClick={() => { setIsNewHospital(false); setForm(f => ({ ...f, newHospitalName: '', newHospitalAddress: '' })); }} className="text-brand-400 hover:text-red-500">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div>
+                          <input type="text" placeholder="Hospital Name *" value={form.newHospitalName} onChange={e => setForm(f => ({ ...f, newHospitalName: e.target.value }))} className="input mb-3 bg-white" />
+                          <input type="text" placeholder="Hospital Full Address (Optional)" value={form.newHospitalAddress} onChange={e => setForm(f => ({ ...f, newHospitalAddress: e.target.value }))} className="input bg-white" />
+                        </div>
+                      </div>
+                    ) : selectedHospital ? (
+                      <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
+                        <div>
+                          <p className="text-sm font-medium text-brand-800">{selectedHospital.name}</p>
+                          <p className="text-xs text-brand-600">{selectedHospital.city}</p>
+                        </div>
+                        <button onClick={() => { setSelectedHospital(null); setHospitalSearch(''); }} className="text-brand-400 hover:text-red-500">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
                       <div>
-                        <p className="text-sm font-medium text-brand-800">Add Custom Hospital</p>
-                        <p className="text-xs text-brand-600">This hospital will be permanently added to {form.city}</p>
-                      </div>
-                      <button onClick={() => { setIsNewHospital(false); setForm(f => ({ ...f, newHospitalName: '', newHospitalAddress: '' })); }} className="text-brand-400 hover:text-red-500">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div>
-                      <input type="text" placeholder="Hospital Name *" value={form.newHospitalName} onChange={e => setForm(f => ({ ...f, newHospitalName: e.target.value }))} className="input mb-3 bg-white" />
-                      <input type="text" placeholder="Hospital Full Address (Optional)" value={form.newHospitalAddress} onChange={e => setForm(f => ({ ...f, newHospitalAddress: e.target.value }))} className="input bg-white" />
-                    </div>
-                  </div>
-                ) : selectedHospital ? (
-                  <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
-                    <div>
-                      <p className="text-sm font-medium text-brand-800">{selectedHospital.name}</p>
-                      <p className="text-xs text-brand-600">{selectedHospital.city}</p>
-                    </div>
-                    <button onClick={() => { setSelectedHospital(null); setHospitalSearch(''); }} className="text-brand-400 hover:text-red-500">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <input value={hospitalSearch} onChange={e => { searchHospitals(e.target.value); setSelectedHospital(null); }}
-                      placeholder="Type hospital name to search..." className="input" />
-                    {hospitalResults.length > 0 && (
-                      <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden z-10 max-h-48 overflow-y-auto">
-                        {hospitalResults.map(h => (
-                          <button key={h.id} onClick={() => { setSelectedHospital(h); setHospitalResults([]); setHospitalSearch(h.name); }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors cursor-pointer border-b border-gray-50 last:border-0 block">
-                            <span className="font-medium text-gray-800">{h.name}</span>
-                            <span className="text-gray-400 ml-2">{h.city}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div className="mt-3">
-                      <button onClick={() => { setIsNewHospital(true); setHospitalResults([]); setSelectedHospital(null); }} className="text-sm text-brand-600 font-semibold hover:underline bg-brand-50 px-3 py-1.5 rounded-lg w-full text-center">
-                        + Add Custom Hospital Manually
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Treatment */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Treatment / Surgery <span className="text-red-500">*</span>
-                </label>
-                {selectedTreatment ? (
-                  <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
-                    <div>
-                      <p className="text-sm font-medium text-brand-800">{selectedTreatment.name}</p>
-                      <p className="text-xs text-brand-600">{selectedTreatment.category}</p>
-                    </div>
-                    <button onClick={() => { setSelectedTreatment(null); setTreatmentSearch(''); }} className="text-brand-400 hover:text-red-500">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <input value={treatmentSearch} onChange={e => { searchTreatments(e.target.value); setSelectedTreatment(null); }}
-                      placeholder="Search treatment name (e.g. Appendicitis)..." className="input" />
-                    {treatmentResults.length > 0 && (
-                      <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden z-10 max-h-48 overflow-y-auto">
-                        {treatmentResults.map(t => (
-                          <button key={t.id} onClick={() => { setSelectedTreatment(t); setTreatmentResults([]); setTreatmentSearch(t.name); }}
-                            className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors cursor-pointer border-b border-gray-50 last:border-0 block">
-                            <span className="font-medium text-gray-800">{t.name}</span>
-                            <span className="text-gray-400 ml-2">{t.category}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {!selectedTreatment && treatmentSearch && treatmentResults.length === 0 && (
-                      <p className="text-xs text-brand-600 mt-2">Custom treatment will be submitted.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* State and City */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">State <span className="text-red-500">*</span></label>
-                  <select value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: '' }))} className="input w-full appearance-none">
-                    <option value="">Select State</option>
-                    {[
-                      'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
-                      'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-                      'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
-                      'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-                      'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Delhi',
-                      'Lakshadweep', 'Puducherry'
-                    ].map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 mb-2 block">City <span className="text-red-500">*</span></label>
-                  <select disabled={!form.state} value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input w-full appearance-none">
-                    <option value="">{form.state ? 'Select City' : 'Select State First'}</option>
-                    {form.state && INDIA_CITIES[form.state]?.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Cost fields */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                  Bill Costs
-                  {file && !isExtracting && (
-                    <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">
-                      Extracted Preview - Please Verify
-                    </span>
-                  )}
-                </label>
-
-                {/* Total Cost always required at the top */}
-                <div className="mb-6 bg-brand-50 p-4 rounded-xl border border-brand-200">
-                  <label className="text-sm font-bold text-brand-900 mb-1 block">Total Bill Amount <span className="text-red-500">*</span></label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
-                    <input type="number" value={form.totalCost} onChange={e => setForm(f => ({ ...f, totalCost: e.target.value }))} className="input pl-7 font-bold text-lg bg-white" placeholder="0" min="0" />
-                  </div>
-                  {form.totalCost && (
-                    <div className="mt-3 flex items-center gap-4 text-sm">
-                      <div className="flex bg-white px-3 py-1.5 rounded-lg font-medium border border-gray-100 text-gray-600">
-                        Filled Amount: <span className="ml-1 text-gray-900 font-bold">₹{totalFilled}</span>
-                      </div>
-                      <div className={`flex bg-white px-3 py-1.5 rounded-lg font-medium border ${remainingAmount < 0 ? 'border-red-200 text-red-600' : remainingAmount > 0 ? 'border-amber-200 text-amber-600' : 'border-emerald-200 text-emerald-600'}`}>
-                        Remaining: <span className="ml-1 font-bold">₹{remainingAmount}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
-                  <div className="grid grid-cols-12 gap-2 bg-gray-50 border-b border-gray-200 p-3 font-semibold text-gray-600 hidden md:grid">
-                    <div className="col-span-12 md:col-span-5">Description of Services</div>
-                    <div className="col-span-3 md:col-span-2 text-center hidden md:block">Qty</div>
-                    <div className="col-span-4 md:col-span-2 text-center hidden md:block">Unit Price (₹)</div>
-                    <div className="col-span-5 md:col-span-3 text-right hidden md:block">Amount (₹)</div>
-                  </div>
-                  <div className="divide-y divide-gray-100">
-                    {[
-                      { key: 'roomCharges', label: 'Room Charges' },
-                      { key: 'surgeryFee', label: 'Surgery / Doctor Fee' },
-                      { key: 'implantCost', label: 'Implant / Device Cost' },
-                      { key: 'pharmacyCost', label: 'Pharmacy / Medicines' },
-                      { key: 'pathologyCost', label: 'Pathology / Lab' },
-                      { key: 'radiologyCost', label: 'Radiology / Imaging' },
-                      { key: 'gst', label: 'GST / Taxes' },
-                      { key: 'otherCharges', label: 'Other Charges' },
-                    ].map(field => {
-                      const fieldData = form[field.key as keyof typeof form] as { qty: string, unitPrice: string, amount: string };
-
-                      const updateField = (k: keyof typeof fieldData, v: string) => {
-                        setForm(f => {
-                          const currentField = f[field.key as keyof typeof f] as { qty: string, unitPrice: string, amount: string };
-                          const newField = { ...currentField, [k]: v };
-
-                          if ((k === 'qty' || k === 'unitPrice') && newField.qty && newField.unitPrice) {
-                            newField.amount = String(Number(newField.qty) * Number(newField.unitPrice));
-                          }
-                          // If GST select changes and we have a valid totalCost, calculate 
-                          if (field.key === 'gst' && k === 'qty' && v !== '' && f.totalCost) {
-                            // Slab is selected in qty, amount = roughly Total * slab / (100+slab) but for simplicity we can just let users fill amount or we calculate slab on top?
-                            // Let's just leave amount untouched and let them fill it, or if they want it auto-populated:
-                            // The user said "fill the box at the end" implying they might just want the amount to be calculated.
-                          }
-                          return { ...f, [field.key]: newField };
-                        });
-                      };
-
-                      if (field.key === 'gst') {
-                        return (
-                          <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
-                            <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">{field.label}</div>
-                            <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
-                              <select value={fieldData.qty || ''} onChange={e => updateField('qty', e.target.value)} className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-2">
-                                <option value="" disabled>Slab %</option>
-                                <option value="0">0%</option>
-                                <option value="5">5%</option>
-                                <option value="18">18%</option>
-                                <option value="40">40%</option>
-                              </select>
-                              <div className="col-span-1 hidden md:block" />
-                              <input type="number" min="0" value={fieldData.amount} onChange={e => updateField('amount', e.target.value)} placeholder="Amt ₹" className="input text-right px-2 py-1.5 h-[34px] text-sm font-semibold text-gray-900 bg-white border-gray-300 col-span-2 md:col-span-3 ml-0 md:ml-2" />
-                            </div>
-                          </div>
-                        )
-                      }
-
-                      return (
-                        <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
-                          <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">
-                            {field.label}
-                            {field.key === 'otherCharges' && remainingAmount > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => updateField('amount', String((Number(fieldData.amount) || 0) + remainingAmount))}
-                                className="ml-2 text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-bold hover:bg-brand-200"
-                              >
-                                Autofill Remaining
+                        <input value={hospitalSearch} onChange={e => { searchHospitals(e.target.value); setSelectedHospital(null); }}
+                          placeholder="Type hospital name to search..." className="input" />
+                        {hospitalResults.length > 0 && (
+                          <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden z-10 max-h-48 overflow-y-auto">
+                            {hospitalResults.map(h => (
+                              <button key={h.id} onClick={() => { setSelectedHospital(h); setHospitalResults([]); setHospitalSearch(h.name); }}
+                                className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors cursor-pointer border-b border-gray-50 last:border-0 block">
+                                <span className="font-medium text-gray-800">{h.name}</span>
+                                <span className="text-gray-400 ml-2">{h.city}</span>
                               </button>
-                            )}
+                            ))}
                           </div>
-                          <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
-                            <input type="number" min="0" value={fieldData.qty} onChange={e => updateField('qty', e.target.value)} placeholder="Qty" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
-                            <input type="number" min="0" value={fieldData.unitPrice} onChange={e => updateField('unitPrice', e.target.value)} placeholder="Price" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
-                            <input type="number" min="0" value={fieldData.amount} onChange={e => updateField('amount', e.target.value)} placeholder="Amt ₹" className="input text-right px-2 py-1.5 h-[34px] text-sm font-semibold text-gray-900 bg-white border-gray-300 col-span-2 md:col-span-3 ml-0 md:ml-2" />
+                        )}
+                        <div className="mt-3">
+                          <button onClick={() => { setIsNewHospital(true); setHospitalResults([]); setSelectedHospital(null); }} className="text-sm text-brand-600 font-semibold hover:underline bg-brand-50 px-3 py-1.5 rounded-lg w-full text-center">
+                            + Add Custom Hospital Manually
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Treatment */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                      Treatment / Surgery <span className="text-red-500">*</span>
+                    </label>
+                    {selectedTreatment ? (
+                      <div className="flex items-center justify-between p-3 bg-brand-50 rounded-xl border border-brand-200">
+                        <div>
+                          <p className="text-sm font-medium text-brand-800">{selectedTreatment.name}</p>
+                          <p className="text-xs text-brand-600">{selectedTreatment.category}</p>
+                        </div>
+                        <button onClick={() => { setSelectedTreatment(null); setTreatmentSearch(''); }} className="text-brand-400 hover:text-red-500">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <input value={treatmentSearch} onChange={e => { searchTreatments(e.target.value); setSelectedTreatment(null); }}
+                          placeholder="Search treatment name (e.g. Appendicitis)..." className="input" />
+                        {treatmentResults.length > 0 && (
+                          <div className="mt-2 bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden z-10 max-h-48 overflow-y-auto">
+                            {treatmentResults.map(t => (
+                              <button key={t.id} onClick={() => { setSelectedTreatment(t); setTreatmentResults([]); setTreatmentSearch(t.name); }}
+                                className="w-full text-left px-4 py-2.5 hover:bg-brand-50 text-sm transition-colors cursor-pointer border-b border-gray-50 last:border-0 block">
+                                <span className="font-medium text-gray-800">{t.name}</span>
+                                <span className="text-gray-400 ml-2">{t.category}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                        {!selectedTreatment && treatmentSearch && treatmentResults.length === 0 && (
+                          <p className="text-xs text-brand-600 mt-2">Custom treatment will be submitted.</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* State and City */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">State <span className="text-red-500">*</span></label>
+                      <select value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: '' }))} className="input w-full appearance-none">
+                        <option value="">Select State</option>
+                        {[
+                          'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
+                          'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+                          'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+                          'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+                          'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Delhi',
+                          'Lakshadweep', 'Puducherry'
+                        ].map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">City <span className="text-red-500">*</span></label>
+                      <select disabled={!form.state} value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input w-full appearance-none">
+                        <option value="">{form.state ? 'Select City' : 'Select State First'}</option>
+                        {form.state && INDIA_CITIES[form.state]?.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Cost fields */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      Bill Costs
+                      {file && !isExtracting && (
+                        <span className="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-bold">
+                          Extracted Preview - Please Verify
+                        </span>
+                      )}
+                    </label>
+
+                    {/* Total Cost always required at the top */}
+                    <div className="mb-6 bg-brand-50 p-4 rounded-xl border border-brand-200">
+                      <label className="text-sm font-bold text-brand-900 mb-1 block">Total Bill Amount <span className="text-red-500">*</span></label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                        <input type="number" value={form.totalCost} onChange={e => setForm(f => ({ ...f, totalCost: e.target.value }))} className="input pl-7 font-bold text-lg bg-white" placeholder="0" min="0" />
+                      </div>
+                      {form.totalCost && (
+                        <div className="mt-3 flex items-center gap-4 text-sm">
+                          <div className="flex bg-white px-3 py-1.5 rounded-lg font-medium border border-gray-100 text-gray-600">
+                            Filled Amount: <span className="ml-1 text-gray-900 font-bold">₹{totalFilled}</span>
+                          </div>
+                          <div className={`flex bg-white px-3 py-1.5 rounded-lg font-medium border ${remainingAmount < 0 ? 'border-red-200 text-red-600' : remainingAmount > 0 ? 'border-amber-200 text-amber-600' : 'border-emerald-200 text-emerald-600'}`}>
+                            Remaining: <span className="ml-1 font-bold">₹{remainingAmount}</span>
                           </div>
                         </div>
-                      )
-                    })}
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
+                      <div className="grid grid-cols-12 gap-2 bg-gray-50 border-b border-gray-200 p-3 font-semibold text-gray-600 hidden md:grid">
+                        <div className="col-span-12 md:col-span-5">Description of Services</div>
+                        <div className="col-span-3 md:col-span-2 text-center hidden md:block">Qty</div>
+                        <div className="col-span-4 md:col-span-2 text-center hidden md:block">Unit Price (₹)</div>
+                        <div className="col-span-5 md:col-span-3 text-right hidden md:block">Amount (₹)</div>
+                      </div>
+                      <div className="divide-y divide-gray-100">
+                        {[
+                          { key: 'roomCharges', label: 'Room Charges' },
+                          { key: 'surgeryFee', label: 'Surgery / Doctor Fee' },
+                          { key: 'implantCost', label: 'Implant / Device Cost' },
+                          { key: 'pharmacyCost', label: 'Pharmacy / Medicines' },
+                          { key: 'pathologyCost', label: 'Pathology / Lab' },
+                          { key: 'radiologyCost', label: 'Radiology / Imaging' },
+                          { key: 'gst', label: 'GST / Taxes' },
+                          { key: 'otherCharges', label: 'Other Charges' },
+                        ].map(field => {
+                          const fieldData = form[field.key as keyof typeof form] as { qty: string, unitPrice: string, amount: string };
+
+                          const updateField = (k: keyof typeof fieldData, v: string) => {
+                            setForm(f => {
+                              const currentField = f[field.key as keyof typeof f] as { qty: string, unitPrice: string, amount: string };
+                              const newField = { ...currentField, [k]: v };
+
+                              if ((k === 'qty' || k === 'unitPrice') && newField.qty && newField.unitPrice) {
+                                newField.amount = String(Number(newField.qty) * Number(newField.unitPrice));
+                              }
+                              // If GST select changes and we have a valid totalCost, calculate 
+                              if (field.key === 'gst' && k === 'qty' && v !== '' && f.totalCost) {
+                                // Slab is selected in qty, amount = roughly Total * slab / (100+slab) but for simplicity we can just let users fill amount or we calculate slab on top?
+                                // Let's just leave amount untouched and let them fill it, or if they want it auto-populated:
+                                // The user said "fill the box at the end" implying they might just want the amount to be calculated.
+                              }
+                              return { ...f, [field.key]: newField };
+                            });
+                          };
+
+                          if (field.key === 'gst') {
+                            return (
+                              <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
+                                <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">{field.label}</div>
+                                <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
+                                  <select value={fieldData.qty || ''} onChange={e => updateField('qty', e.target.value)} className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-2">
+                                    <option value="" disabled>Slab %</option>
+                                    <option value="0">0%</option>
+                                    <option value="5">5%</option>
+                                    <option value="18">18%</option>
+                                    <option value="40">40%</option>
+                                  </select>
+                                  <div className="col-span-1 hidden md:block" />
+                                  <input type="number" min="0" value={fieldData.amount} onChange={e => updateField('amount', e.target.value)} placeholder="Amt ₹" className="input text-right px-2 py-1.5 h-[34px] text-sm font-semibold text-gray-900 bg-white border-gray-300 col-span-2 md:col-span-3 ml-0 md:ml-2" />
+                                </div>
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
+                              <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">
+                                {field.label}
+                                {field.key === 'otherCharges' && remainingAmount > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateField('amount', String((Number(fieldData.amount) || 0) + remainingAmount))}
+                                    className="ml-2 text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-bold hover:bg-brand-200"
+                                  >
+                                    Autofill Remaining
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
+                                <input type="number" min="0" value={fieldData.qty} onChange={e => updateField('qty', e.target.value)} placeholder="Qty" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
+                                <input type="number" min="0" value={fieldData.unitPrice} onChange={e => updateField('unitPrice', e.target.value)} placeholder="Price" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
+                                <input type="number" min="0" value={fieldData.amount} onChange={e => updateField('amount', e.target.value)} placeholder="Amt ₹" className="input text-right px-2 py-1.5 h-[34px] text-sm font-semibold text-gray-900 bg-white border-gray-300 col-span-2 md:col-span-3 ml-0 md:ml-2" />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { key: 'admissionDate', label: 'Admission Date' },
-                  { key: 'dischargeDate', label: 'Discharge Date' },
-                ].map(d => (
-                  <div key={d.key}>
-                    <label className="text-xs text-gray-500 mb-1 block">{d.label}</label>
-                    <input type="date" value={form[d.key as keyof typeof form] as string}
-                      onChange={e => setForm(f => ({ ...f, [d.key]: e.target.value }))}
-                      className="input text-sm" />
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { key: 'admissionDate', label: 'Admission Date' },
+                      { key: 'dischargeDate', label: 'Discharge Date' },
+                    ].map(d => (
+                      <div key={d.key}>
+                        <label className="text-xs text-gray-500 mb-1 block">{d.label}</label>
+                        <input type="date" value={form[d.key as keyof typeof form] as string}
+                          onChange={e => setForm(f => ({ ...f, [d.key]: e.target.value }))}
+                          className="input text-sm" />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* Submit */}
-              <button onClick={handleSubmit} disabled={loading || isExtracting}
-                className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2 mt-8 text-center text-lg shadow-xl shadow-brand-500/20">
-                {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</> : <><CheckCircle className="w-5 h-5" /> Submit Verified Bill</>}
-              </button>
+                  {/* Submit */}
+                  <button onClick={handleSubmit} disabled={loading || isExtracting}
+                    className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2 mt-8 text-center text-lg shadow-xl shadow-brand-500/20">
+                    {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</> : <><CheckCircle className="w-5 h-5" /> Submit Verified Bill</>}
+                  </button>
 
-              <p className="text-xs text-center text-gray-400">
-                By submitting, you confirm this is your own bill and consent to anonymous storage of cost data only.
-              </p>
+                  <p className="text-xs text-center text-gray-400">
+                    By submitting, you confirm this is your own bill and consent to anonymous storage of cost data only.
+                  </p>
                 </div>
               )}
             </div>
