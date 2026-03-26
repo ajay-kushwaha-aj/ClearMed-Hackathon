@@ -135,62 +135,49 @@ export interface ExtractedBillData {
   confidence: number;
 }
 
+// Upgraded Regex Patterns: Added decimal support and relaxed spacing/dots
 const COST_PATTERNS = [
-  /total\s*(?:amount|bill|charges?|cost)\s*[:\-]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
-  /grand\s*total\s*[:\-]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
-  /net\s*(?:amount|payable)\s*[:\-]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
-  /amount\s*(?:paid|payable)\s*[:\-]?\s*(?:rs\.?|₹|inr)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
+  /(?:total|grand\s*total|net\s*payable|amount\s*paid)\s*(?:amount|bill|charges?|cost)?[\s:\.\-]*(?:rs\.?|₹|inr)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
   /(?:rs\.?|₹|inr)\s*([\d,]{4,}(?:\.\d{1,2})?)\s*(?:only|\/)?/gi,
 ];
 
 const ROOM_PATTERNS = [
-  /room\s*(?:rent|charges?|tariff)\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /bed\s*charges?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /accommodation\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+  /(?:room|bed|ward)\s*(?:rent|charges?|tariff)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
+  /accommodation[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const SURGERY_PATTERNS = [
-  /(?:surgery|operation|surgical|procedure|ot)\s*(?:charges?|fees?)\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /surgeon\s*(?:fee|charges?)\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /operation\s*theatre\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /ot\s*charges?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+  /(?:surgery|operation|surgical|procedure|ot)\s*(?:charges?|fees?)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
+  /surgeon\s*(?:fee|charges?)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
+  /(?:operation theatre|ot\s*charges?)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const IMPLANT_PATTERNS = [
-  /implant\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /prosthesis\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /device\s*cost\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /stent\s*(?:cost|charges?)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /implantable\s*(?:device)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+  /(?:implant|prosthesis|device cost|stent)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const PHARMACY_PATTERNS = [
-  /pharmacy\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /medicine[s]?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /drug[s]?\s*(?:charges?)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-];
-
-const DATE_PATTERNS = [
-  /(?:admission|admit|date\s+of\s+admission)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
-  /(?:doa|admitted\s+on)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
-];
-
-const DISCHARGE_PATTERNS = [
-  /(?:discharge|discharged|date\s+of\s+discharge)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
-  /(?:dod|discharged\s+on)\s*[:\-]?\s*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
+  /(?:pharmacy|medicine[s]?|drugs?)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const PATHOLOGY_PATTERNS = [
-  /(?:pathology|lab(?:oratory)?|tests?|investigations?)\s*(?:charges?)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
-  /blood\s*tests?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+  /(?:pathology|lab(?:oratory)?|tests?|investigations?|blood)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const RADIOLOGY_PATTERNS = [
-  /(?:radiology|x-?ray|scan|mri|ct\s*scan|ultrasound)\s*(?:charges?)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+)/gi,
+  /(?:radiology|x-?ray|scan|mri|ct\s*scan|ultrasound)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
 ];
 
 const GST_PATTERNS = [
-  /(?:gst|cgst|sgst|igst|tax)\s*(?:amount)?\s*[:\-]?\s*(?:rs\.?|₹)?\s*([\d,]+(?:\.\d{1,2})?)/gi,
+  /(?:gst|cgst|sgst|igst|tax)[\s:\.\-]*(?:rs\.?|₹)?[\s]*([\d,]+(?:\.\d{1,2})?)/gi,
+];
+
+const DATE_PATTERNS = [
+  /(?:admission|admit|date\s+of\s+admission|doa|admitted\s+on)[\s:\.\-]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
+];
+
+const DISCHARGE_PATTERNS = [
+  /(?:discharge|discharged|date\s+of\s+discharge|dod|discharged\s+on)[\s:\.\-]*(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/gi,
 ];
 
 const DOCTOR_PATTERNS = [
@@ -201,8 +188,8 @@ const DOCTOR_PATTERNS = [
 function parseAmount(match: string): number | undefined {
   const cleaned = match.replace(/[,\s]/g, '');
   const val = parseFloat(cleaned);
-  // Sanity check: medical bills are between ₹500 and ₹50L
-  if (!isNaN(val) && val >= 500 && val <= 5000000) return val;
+  // Allow 0 and any amount up to 50 Lakhs.
+  if (!isNaN(val) && val >= 0 && val <= 5000000) return val;
   return undefined;
 }
 
@@ -212,7 +199,7 @@ function extractFirst(text: string, patterns: RegExp[]): number | undefined {
     const match = pattern.exec(text);
     if (match?.[1]) {
       const val = parseAmount(match[1]);
-      if (val) return val;
+      if (val !== undefined) return val;
     }
   }
   return undefined;
@@ -224,7 +211,6 @@ function extractDate(text: string, patterns: RegExp[]): string | undefined {
     const match = pattern.exec(text);
     if (match?.[1]) {
       const raw = match[1].trim();
-      // Try to normalize to YYYY-MM-DD
       const parts = raw.split(/[\/\-\.]/);
       if (parts.length === 3) {
         const [d, m, y] = parts;
@@ -246,24 +232,31 @@ export function extractBillData(text: string): ExtractedBillData {
   const data: ExtractedBillData = { confidence: 0 };
   let fieldsExtracted = 0;
 
-  // Total cost
+  // Extract all fields
   data.totalCost = extractFirst(text, COST_PATTERNS);
-  if (data.totalCost) fieldsExtracted++;
+  if (data.totalCost !== undefined) fieldsExtracted++;
 
-  // Cost breakdown
   data.roomCharges = extractFirst(text, ROOM_PATTERNS);
-  if (data.roomCharges) fieldsExtracted++;
+  if (data.roomCharges !== undefined) fieldsExtracted++;
 
   data.surgeryFee = extractFirst(text, SURGERY_PATTERNS);
-  if (data.surgeryFee) fieldsExtracted++;
+  if (data.surgeryFee !== undefined) fieldsExtracted++;
 
   data.implantCost = extractFirst(text, IMPLANT_PATTERNS);
-  if (data.implantCost) fieldsExtracted++;
+  if (data.implantCost !== undefined) fieldsExtracted++;
 
   data.pharmacyCost = extractFirst(text, PHARMACY_PATTERNS);
-  if (data.pharmacyCost) fieldsExtracted++;
+  if (data.pharmacyCost !== undefined) fieldsExtracted++;
 
-  // Dates
+  data.pathologyCost = extractFirst(text, PATHOLOGY_PATTERNS);
+  if (data.pathologyCost !== undefined) fieldsExtracted++;
+
+  data.radiologyCost = extractFirst(text, RADIOLOGY_PATTERNS);
+  if (data.radiologyCost !== undefined) fieldsExtracted++;
+
+  data.gst = extractFirst(text, GST_PATTERNS);
+  if (data.gst !== undefined) fieldsExtracted++;
+
   data.admissionDate = extractDate(text, DATE_PATTERNS);
   if (data.admissionDate) fieldsExtracted++;
 
@@ -276,20 +269,10 @@ export function extractBillData(text: string): ExtractedBillData {
     const discharge = new Date(data.dischargeDate);
     const diffMs = discharge.getTime() - admit.getTime();
     const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
-    if (days > 0 && days < 365) data.stayDays = days;
+    if (days >= 0 && days < 365) data.stayDays = days || 1; // Minimum 1 day stay
   }
 
-  // New fields
-  data.pathologyCost = extractFirst(text, PATHOLOGY_PATTERNS);
-  if (data.pathologyCost) fieldsExtracted++;
-
-  data.radiologyCost = extractFirst(text, RADIOLOGY_PATTERNS);
-  if (data.radiologyCost) fieldsExtracted++;
-
-  data.gst = extractFirst(text, GST_PATTERNS);
-  if (data.gst) fieldsExtracted++;
-
-  // Doctor name (first match after PII removal)
+  // Doctor name
   for (const pattern of DOCTOR_PATTERNS) {
     pattern.lastIndex = 0;
     const match = pattern.exec(text);
@@ -300,7 +283,7 @@ export function extractBillData(text: string): ExtractedBillData {
     }
   }
 
-  // Confidence: 0–1 based on fields successfully extracted
+  // Confidence calculation
   data.confidence = Math.min(1.0, fieldsExtracted / 5);
 
   return data;
