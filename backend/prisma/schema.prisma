@@ -163,6 +163,7 @@ model Hospital {
   beds        Int?
   naabhStatus Boolean      @default(false) @map("nabh_status")
   rating      Float?       @default(0)
+  departments Json?
   lat         Float?
   lng         Float?
   imageUrl    String?      @map("image_url")

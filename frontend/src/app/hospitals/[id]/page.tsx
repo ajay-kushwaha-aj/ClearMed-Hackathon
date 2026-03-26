@@ -43,12 +43,58 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
     TRUST: 'badge-gray',
   };
 
-  const groupedDoctors = hospital.doctors.reduce((acc: any, doc: any) => {
-    const dept = doc.specialization || 'General';
-    if (!acc[dept]) acc[dept] = [];
-    acc[dept].push(doc);
-    return acc;
-  }, {});
+  let renderedDepartments: Array<{ category: string, departments: Array<{ name: string, doctors: any[] }> }> = [];
+
+  if (hospital.departments && typeof hospital.departments === 'object' && !Array.isArray(hospital.departments)) {
+    // Categorized AIIMS style
+    for (const [category, depts] of Object.entries(hospital.departments)) {
+      const deptsList = (depts as string[]).map(deptName => {
+        const docs = hospital.doctors?.filter((d: any) => d.specialization?.toLowerCase() === deptName.toLowerCase()) || [];
+        return { name: deptName, doctors: docs };
+      });
+      renderedDepartments.push({ category, departments: deptsList });
+    }
+    
+    // Unmatched doctors
+    const matchedDocs = new Set(renderedDepartments.flatMap(c => c.departments.flatMap(d => d.doctors.map(doc => doc.id))));
+    const unmatchedDocs = hospital.doctors?.filter((d: any) => !matchedDocs.has(d.id)) || [];
+    if (unmatchedDocs.length > 0) {
+      const otherGroup: any = {};
+      unmatchedDocs.forEach((doc: any) => {
+        const dept = doc.specialization || 'General';
+        if (!otherGroup[dept]) otherGroup[dept] = [];
+        otherGroup[dept].push(doc);
+      });
+      renderedDepartments.push({
+        category: 'Additional Specialists',
+        departments: Object.entries(otherGroup).map(([name, docs]) => ({ name, doctors: docs as any[] }))
+      });
+    }
+  } else if (hospital.departments && Array.isArray(hospital.departments)) {
+    // Flat string array style
+    const deptsList = (hospital.departments as string[]).map(deptName => {
+      const docs = hospital.doctors?.filter((d: any) => d.specialization?.toLowerCase() === deptName.toLowerCase()) || [];
+      return { name: deptName, doctors: docs };
+    });
+    renderedDepartments.push({ category: 'Departments & Specialists', departments: deptsList });
+  } else {
+    // Fallback: group existing doctors by specialization
+    const groupedDoctors = (hospital.doctors || []).reduce((acc: any, doc: any) => {
+      const dept = doc.specialization || 'General';
+      if (!acc[dept]) acc[dept] = [];
+      acc[dept].push(doc);
+      return acc;
+    }, {});
+    
+    if (Object.keys(groupedDoctors).length > 0) {
+      renderedDepartments.push({
+        category: 'Departments & Specialists',
+        departments: Object.entries(groupedDoctors).map(([name, docs]) => ({ name, doctors: docs as any[] }))
+      });
+    }
+  }
+
+  const totalDepartments = renderedDepartments.reduce((sum, cat) => sum + cat.departments.length, 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -184,47 +230,63 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
             <div className="card p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Departments & Specialists</h2>
-                <span className="text-sm text-gray-500">{Object.keys(groupedDoctors).length} Departments</span>
+                <span className="text-sm text-gray-500">{totalDepartments} Departments</span>
               </div>
-              {Object.keys(groupedDoctors).length > 0 ? (
-                <div className="space-y-6">
-                  {Object.entries(groupedDoctors).map(([dept, docs]: [string, any]) => (
-                    <div key={dept}>
-                      <h3 className="text-base font-bold text-gray-800 mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-brand-500" /> {dept} Department
-                      </h3>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        {docs.map((doc: {
-                          id: string;
-                          name: string;
-                          specialization: string;
-                          qualification?: string;
-                          experienceYears?: number;
-                          rating?: number;
-                          bio?: string;
-                        }) => (
-                          <div key={doc.id} className="p-4 rounded-xl border border-gray-100 hover:border-brand-200 transition-colors">
-                            <div className="flex items-start gap-3">
-                              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-100 to-teal-100 flex items-center justify-center text-brand-700 font-bold text-sm shrink-0">
-                                {doc.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+              {renderedDepartments.length > 0 ? (
+                <div className="space-y-8">
+                  {renderedDepartments.map((categoryGroup, idx) => (
+                    <div key={idx} className="bg-white">
+                      {categoryGroup.category !== 'Departments & Specialists' && (
+                        <h3 className="text-lg font-extrabold text-brand-900 mb-4 bg-brand-50 rounded-lg p-3 border border-brand-100">
+                          {categoryGroup.category}
+                        </h3>
+                      )}
+                      
+                      <div className="space-y-6 ml-0 md:ml-2">
+                        {categoryGroup.departments.map((dept) => (
+                          <div key={dept.name} className="relative">
+                            <h4 className="text-base font-bold text-gray-800 mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
+                              {categoryGroup.category !== 'Departments & Specialists' && <span className="w-1.5 h-1.5 rounded-full bg-brand-400" />}
+                              {!categoryGroup.category || categoryGroup.category === 'Departments & Specialists' ? <span className="w-2 h-2 rounded-full bg-brand-500" /> : null}
+                              {dept.name}
+                            </h4>
+                            
+                            {dept.doctors.length > 0 ? (
+                              <div className="grid sm:grid-cols-2 gap-4">
+                                {dept.doctors.map((doc: any) => (
+                                  <div key={doc.id} className="p-4 rounded-xl border border-gray-100 hover:border-brand-200 transition-colors">
+                                    <div className="flex items-start gap-3">
+                                      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-100 to-teal-100 flex items-center justify-center text-brand-700 font-bold text-sm shrink-0">
+                                        {doc.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('')}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-semibold text-gray-900 text-sm">{doc.name}</p>
+                                        <p className="text-xs text-brand-600 font-medium">{doc.specialization}</p>
+                                        {doc.qualification && <p className="text-xs text-gray-400 mt-0.5 leading-tight">{doc.qualification}</p>}
+                                      </div>
+                                      {doc.rating && (
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                                          <span className="text-xs font-semibold text-gray-700">{doc.rating?.toFixed(1)}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {doc.bio && <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-2">{doc.bio}</p>}
+                                    {doc.experienceYears && (
+                                      <div className="mt-2 flex items-center gap-1">
+                                        <Calendar className="w-3 h-3 text-gray-400" />
+                                        <span className="text-xs text-gray-500">{doc.experienceYears} years experience</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-gray-900 text-sm">{doc.name}</p>
-                                <p className="text-xs text-brand-600 font-medium">{doc.specialization}</p>
-                                {doc.qualification && <p className="text-xs text-gray-400 mt-0.5 leading-tight">{doc.qualification}</p>}
-                              </div>
-                              {doc.rating && (
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-                                  <span className="text-xs font-semibold text-gray-700">{doc.rating?.toFixed(1)}</span>
-                                </div>
-                              )}
-                            </div>
-                            {doc.bio && <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-2">{doc.bio}</p>}
-                            {doc.experienceYears && (
-                              <div className="mt-2 flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-gray-400" />
-                                <span className="text-xs text-gray-500">{doc.experienceYears} years experience</span>
+                            ) : (
+                              <div className="py-2 px-4 bg-gray-50 rounded-lg border border-gray-100 inline-block">
+                                <p className="text-sm text-gray-500 font-medium flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                  Department Active
+                                </p>
                               </div>
                             )}
                           </div>

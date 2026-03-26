@@ -1,80 +1,48 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
 
-// Multer config — store in memory for base64 conversion
+// Multer config — store in memory for buffer usage
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
   fileFilter: (_req, file, cb) => {
     const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only JPEG, PNG, WebP, GIF images and PDF files are accepted'));
+      cb(new Error('Only JPEG, PNG, WebP, GIF images and PDFs are accepted'));
     }
   },
 });
 
 const SUPPORTED_LANGUAGES: Record<string, string> = {
-  en: 'English',
-  hi: 'Hindi',
-  ta: 'Tamil',
-  te: 'Telugu',
-  bn: 'Bengali',
-  mr: 'Marathi',
-  gu: 'Gujarati',
-  kn: 'Kannada',
-  ml: 'Malayalam',
-  pa: 'Punjabi',
+  en: 'English', hi: 'Hindi', ta: 'Tamil', te: 'Telugu', bn: 'Bengali',
+  mr: 'Marathi', gu: 'Gujarati', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi',
 };
 
-const buildPrompt = (language: string) => `You are an expert medical report analyzer. Analyze the uploaded medical report image or pdf thoroughly and provide a detailed analysis.
+const buildPrompt = (language: string) => `You are an expert medical report analyzer. Analyze the provided medical report text thoroughly.
 
 Respond ENTIRELY in ${SUPPORTED_LANGUAGES[language] || 'English'}.
 
 Return your response as valid JSON with this exact structure:
 {
-  "patientInfo": {
-    "name": "patient name or 'Not Available'",
-    "age": "age or 'Not Available'",
-    "gender": "gender or 'Not Available'",
-    "date": "report date or 'Not Available'",
-    "referredBy": "doctor name or 'Not Available'",
-    "labName": "laboratory name or 'Not Available'"
-  },
-  "reportType": "Type of report (e.g., Complete Blood Count, Lipid Profile, Thyroid Panel, etc.)",
+  "patientInfo": { "name": "string", "age": "string", "gender": "string", "date": "string", "referredBy": "string", "labName": "string" },
+  "reportType": "string",
   "testResults": [
-    {
-      "testName": "name of the test/parameter",
-      "value": "measured value with unit",
-      "unit": "measurement unit",
-      "referenceRange": "normal range",
-      "status": "NORMAL | HIGH | LOW | CRITICAL",
-      "interpretation": "brief 1-line interpretation of this specific value"
-    }
+    { "testName": "string", "value": "string", "unit": "string", "referenceRange": "string", "status": "NORMAL | HIGH | LOW | CRITICAL", "interpretation": "string" }
   ],
-  "overallAnalysis": {
-    "conditions": [
-      {
-        "name": "Condition Name",
-        "likelihood": "High | Moderate | Low"
-      }
-    ],
-    "topDepartment": "Medical department most relevant to the top condition (e.g., Cardiology, Hematology, General Medicine)"
-  },
-  "summary": "A comprehensive 3-5 sentence summary of the overall report findings",
-  "keyFindings": ["list of important findings that need attention"],
-  "recommendations": ["list of actionable health recommendations based on the results"],
+  "overallAnalysis": { "conditions": [ { "name": "string", "likelihood": "High | Moderate | Low" } ], "topDepartment": "string" },
+  "summary": "string",
+  "keyFindings": ["string"],
+  "recommendations": ["string"],
   "urgencyLevel": "ROUTINE | ATTENTION_NEEDED | URGENT | CRITICAL",
-  "disclaimer": "This is an AI-generated analysis for informational purposes only. Always consult a qualified healthcare professional for medical advice."
+  "disclaimer": "This is an AI-generated analysis. Always consult a doctor."
 }
+Keep the JSON structure strict and without markdown code blocks.`;
 
-Be thorough — extract every test parameter visible in the report. If a value is abnormal, clearly explain why in the interpretation field. Keep the JSON structure strict and without markdown code blocks if possible.`;
-
-// ─── Analyze report ────────────────────────────────────────────────────────
+// ─── Analyze report (OCR.space + Groq Text) ───────────────────────────
 router.post('/analyze', upload.single('file'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
@@ -83,37 +51,69 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
     }
 
     const language = (req.body.language as string) || 'en';
-    if (!SUPPORTED_LANGUAGES[language]) {
-      res.status(400).json({ error: `Unsupported language. Supported: ${Object.keys(SUPPORTED_LANGUAGES).join(', ')}` });
+    const groqApiKey = process.env.GROQ_API_KEY;
+    const ocrApiKey = process.env.OCR_SPACE_API_KEY;
+
+    if (!groqApiKey || !ocrApiKey) {
+      res.status(500).json({ error: 'API Keys (Groq or OCR.space) not configured on server.' });
       return;
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      res.status(500).json({ error: 'Gemini API key not configured on server.' });
+    // --- FIX 2: Use FormData to prevent Base64 size limits ---
+    const formData = new FormData();
+    formData.append('apikey', ocrApiKey);
+    formData.append('isTable', 'true');
+    formData.append('OCREngine', '2'); // Engine 2 is much better for medical tables/numbers
+
+    // Convert multer buffer to a Blob for FormData
+    const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+    formData.append('file', blob, req.file.originalname);
+
+    const ocrResponse = await fetch('https://api.ocr.space/parse/image', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!ocrResponse.ok) throw new Error(`OCR.space HTTP error: ${ocrResponse.statusText}`);
+
+    const ocrResult = await ocrResponse.json() as any;
+    if (ocrResult.IsErroredOnProcessing) throw new Error(`OCR error: ${ocrResult.ErrorMessage?.[0]}`);
+
+    // --- FIX 1: Map through ALL pages of a PDF to grab all text ---
+    const extractedText = ocrResult.ParsedResults?.map((page: any) => page.ParsedText).join('\n\n') || '';
+
+    if (!extractedText || extractedText.trim().length < 10) {
+      res.status(422).json({ error: "Could not read text from this file. Please try a clearer document." });
       return;
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash', generationConfig: { responseMimeType: 'application/json' } });
-
-    // Convert file to base64
-    const base64 = req.file.buffer.toString('base64');
-    const mimeType = req.file.mimetype;
-
-    const filePart = {
-      inlineData: {
-        data: base64,
-        mimeType
-      }
+    // --- Send the extracted text to Groq ---
+    const promptText = buildPrompt(language);
+    const requestBody = {
+      model: 'llama-3.3-70b-versatile', // Groq's super fast text model
+      messages: [
+        { role: 'user', content: `${promptText}\n\nHere is the raw text extracted from the report:\n\n${extractedText}` }
+      ],
+      temperature: 0.1
     };
 
-    const promptText = buildPrompt(language);
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${groqApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-    const result = await model.generateContent([promptText, filePart]);
-    let content = result.response.text();
+    if (!groqResponse.ok) {
+      const errText = await groqResponse.text();
+      throw new Error(`Groq API Error: ${errText}`);
+    }
 
-    // Extract JSON from response (handle markdown code blocks)
+    const result = await groqResponse.json();
+    let content = result.choices[0].message.content;
+
     let jsonStr = content.trim();
     jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -121,14 +121,13 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
     try {
       analysis = JSON.parse(jsonStr);
     } catch {
-      // If JSON parsing fails, return raw text
       analysis = {
         summary: content,
         testResults: [],
-        keyFindings: ['Could not parse structured data from this report. Please try a clearer document.'],
+        keyFindings: ['Could not parse structured data from this report.'],
         recommendations: [],
         urgencyLevel: 'ROUTINE',
-        disclaimer: 'This is an AI-generated analysis for informational purposes only.',
+        disclaimer: 'This is an AI-generated analysis.',
       };
     }
 
@@ -151,35 +150,45 @@ router.post('/analyze', upload.single('file'), async (req: Request, res: Respons
   }
 });
 
-// ─── Chat about report ──────────────────────────────────────────────────────
+// ─── Chat about report ─────────────────────────────
 router.post('/chat', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { message, reportContext, language = 'en' } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
+
     if (!apiKey) {
-      res.status(500).json({ error: 'Gemini API Setup Missing' });
+      res.status(500).json({ error: 'GROQ_API_KEY Setup Missing' });
       return;
     }
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-    const prompt = `You are a helpful, professional medical AI assistant.
-Answer the user's question regarding their medical report.
+
+    const prompt = `You are a helpful medical AI assistant. Answer the user's question regarding their report.
 Report details: ${JSON.stringify(reportContext)}
-
 Respond entirely in ${SUPPORTED_LANGUAGES[language] || 'English'}.
+Keep the answer concise and professional.`;
 
-User Query: "${message}"
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: prompt },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.5
+      })
+    });
 
-Keep the answer concise and professional. Add a very short disclaimer that you are an AI.`;
-
-    const result = await model.generateContent(prompt);
-    res.json({ data: { reply: result.response.text() } });
+    const result = await response.json();
+    res.json({ data: { reply: result.choices[0].message.content } });
   } catch (err) {
     next(err);
   }
 });
 
-// ─── Get supported languages ───────────────────────────────────────────────
 router.get('/languages', (_req: Request, res: Response) => {
   res.json({ data: SUPPORTED_LANGUAGES });
 });

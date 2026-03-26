@@ -281,11 +281,66 @@ export default function UploadPage() {
           ) : (
             <div className="card p-6 space-y-6">
               {error && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3">
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 mb-6">
                   <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
+
+              {/* 1. File Upload (Moved to top) */}
+              <div>
+                <label className="text-lg font-bold text-gray-900 mb-2 block">
+                  Step 1: Upload Bill
+                </label>
+                <p className="text-sm text-gray-500 mb-4">We will automatically extract the data for you.</p>
+                
+                {file ? (
+                  <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                        {file.type === 'application/pdf' ? <FileText className="w-5 h-5 text-emerald-600" /> : <ImageIcon className="w-5 h-5 text-emerald-600" />}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-emerald-900">{file.name}</p>
+                        <p className="text-xs text-emerald-700">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        {isExtracting ? (
+                          <p className="text-xs text-brand-600 font-bold flex items-center gap-1 mt-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Extracting AI data...</p>
+                        ) : (
+                          <p className="text-xs text-emerald-600 font-bold flex items-center gap-1 mt-1.5"><CheckCircle className="w-3.5 h-3.5" /> Extraction complete</p>
+                        )}
+                      </div>
+                    </div>
+                    <button disabled={isExtracting} onClick={() => setFile(null)} className="p-2 text-emerald-600 hover:bg-emerald-100 rounded-lg transition-colors disabled:opacity-50">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDrop={onDrop}
+                    onDragOver={e => { e.preventDefault(); setDrag(true); }}
+                    onDragLeave={() => setDrag(false)}
+                    className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${drag ? 'border-brand-400 bg-brand-50' : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'}`}
+                    onClick={() => document.getElementById('file-input')?.click()}>
+                    <div className="w-16 h-16 bg-white shadow-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Upload className="w-8 h-8 text-brand-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-1">Click or drag bill here</h3>
+                    <p className="text-sm text-gray-500">PDF, JPG, PNG up to 10MB</p>
+                    <input id="file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden"
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Editable Preview - Only show if file is uploaded */}
+              {file && (
+                <div className="mt-8 pt-8 border-t border-gray-100 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div>
+                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      Step 2: Verify & Edit Extracted Data
+                    </h2>
+                    <p className="text-sm text-gray-500">Please review the AI extracted details below. You can correct any inaccurate information.</p>
+                  </div>
 
               {/* Hospital */}
               <div>
@@ -532,56 +587,17 @@ export default function UploadPage() {
                 ))}
               </div>
 
-              {/* File upload */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Bill File <span className="text-red-500">*</span>
-                  <span className="ml-2 text-xs text-gray-400 font-normal">PDF, JPG or PNG · Max 10MB</span>
-                </label>
-                {file ? (
-                  <div className="flex items-center justify-between p-3.5 bg-brand-50 rounded-xl border border-brand-200">
-                    <div className="flex items-center gap-2">
-                      {file.type === 'application/pdf' ? <FileText className="w-5 h-5 text-brand-600" /> : <ImageIcon className="w-5 h-5 text-brand-600" />}
-                      <div>
-                        <p className="text-sm font-medium text-brand-800">{file.name}</p>
-                        <p className="text-xs text-brand-600">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        {isExtracting && <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1"><Loader2 className="w-3 h-3 animate-spin" /> Extracting data...</p>}
-                        {!isExtracting && <p className="text-xs text-emerald-600 flex items-center gap-1 mt-1"><CheckCircle className="w-3 h-3" /> Data extracted</p>}
-                      </div>
-                    </div>
-                    <button disabled={isExtracting} onClick={() => setFile(null)} className="text-brand-400 hover:text-red-500 disabled:opacity-50">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    onDrop={onDrop}
-                    onDragOver={e => { e.preventDefault(); setDrag(true); }}
-                    onDragLeave={() => setDrag(false)}
-                    className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${drag ? 'border-brand-400 bg-brand-50' : 'border-gray-200 hover:border-brand-300 hover:bg-gray-50'}`}
-                    onClick={() => document.getElementById('file-input')?.click()}>
-                    <Upload className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 font-medium">Drop your bill here, or click to browse</p>
-                    <p className="text-xs text-gray-400 mt-1">PDF, JPG, PNG · Max 10MB</p>
-                    <input id="file-input" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
-                  </div>
-                )}
-                <div className="flex items-start gap-2 mt-2">
-                  <Info className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-gray-400">Uploading a bill file is mandatory for verification.</p>
-                </div>
-              </div>
-
               {/* Submit */}
-              <button onClick={handleSubmit} disabled={loading}
-                className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2 mt-4 text-center">
-                {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</> : <><Upload className="w-5 h-5" /> Submit Bill</>}
+              <button onClick={handleSubmit} disabled={loading || isExtracting}
+                className="btn btn-primary btn-lg w-full flex items-center justify-center gap-2 mt-8 text-center text-lg shadow-xl shadow-brand-500/20">
+                {loading ? <><Loader2 className="w-5 h-5 animate-spin" /> Uploading...</> : <><CheckCircle className="w-5 h-5" /> Submit Verified Bill</>}
               </button>
 
               <p className="text-xs text-center text-gray-400">
                 By submitting, you confirm this is your own bill and consent to anonymous storage of cost data only.
               </p>
+                </div>
+              )}
             </div>
           )}
         </div>
