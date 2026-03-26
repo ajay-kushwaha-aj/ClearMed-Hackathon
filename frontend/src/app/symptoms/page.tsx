@@ -24,6 +24,7 @@ interface HospitalMatch {
   city: string;
   rating: number | null;
   imageUrl: string | null;
+  type?: string;
   doctors: Array<{ name: string; specialization: string }>;
 }
 
@@ -416,7 +417,7 @@ export default function SymptomAnalyzerPage() {
                               </div>
                             ) : (
                               <Link
-                                href={`/search?treatment=${encodeURIComponent(c.name)}&city=${city}`}
+                                href={`/search?treatment=${encodeURIComponent(c.name)}&department=${encodeURIComponent(c.department)}&city=${city}`}
                                 className="group inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-800 border border-brand-200 hover:bg-brand-50 px-5 py-3 rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-brand-100/30"
                               >
                                 <Building2 className="w-4 h-4 group-hover:scale-110 transition-transform" /> Find Hospitals for this Condition

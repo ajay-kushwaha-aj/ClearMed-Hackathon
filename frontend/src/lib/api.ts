@@ -82,7 +82,7 @@ export interface PaginatedResponse<T> {
 
 // ─── Hospital API ─────────────────────────────────────────────────────────
 export interface HospitalFilters {
-  treatment?: string; search?: string; city?: string; type?: string;
+  treatment?: string; department?: string; search?: string; city?: string; type?: string;
   minCost?: number; maxCost?: number; nabh?: boolean;
   page?: number; limit?: number;
   sort?: 'rating' | 'cost_asc' | 'cost_desc' | 'name';

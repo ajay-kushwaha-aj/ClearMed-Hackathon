@@ -37,6 +37,7 @@ function SearchPageInner() {
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     treatment: sp.get('treatment') || '',
+    department: sp.get('department') || '',
     search: sp.get('search') || '',
     city: sp.get('city') || 'Delhi',
     type: sp.get('type') || '',
@@ -56,6 +57,7 @@ function SearchPageInner() {
     try {
       const res = await hospitalsAPI.list({
         treatment: filters.treatment || undefined,
+        department: filters.department || undefined,
         search: filters.search || undefined,
         city: filters.city || undefined,
         type: (filters.type as 'GOVERNMENT' | 'PRIVATE' | 'TRUST' | 'CHARITABLE') || undefined,

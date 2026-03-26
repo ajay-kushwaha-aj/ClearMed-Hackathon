@@ -9,6 +9,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const schema = z.object({
       treatment: z.string().optional(),
+      department: z.string().optional(),
       search: z.string().optional(),
       city: z.string().optional(),
       type: z.enum(['GOVERNMENT', 'PRIVATE', 'TRUST', 'CHARITABLE']).optional(),
@@ -29,25 +30,42 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     if (params.nabh !== undefined) where.naabhStatus = params.nabh === 'true';
     if (params.search) where.name = { contains: params.search, mode: 'insensitive' };
 
-    // Filter by treatment & cost
+    // Filter by treatment, department & cost
+    const specialtyFilters: any[] = [];
     if (params.treatment) {
-      where.hospitalTreatments = {
-        some: {
-          isAvailable: true,
-          treatment: {
-            OR: [
-              { slug: params.treatment },
-              { name: { contains: params.treatment, mode: 'insensitive' } },
-            ]
-          },
-          ...(params.minCost || params.maxCost ? {
-            avgCostEstimate: {
-              ...(params.minCost ? { gte: params.minCost } : {}),
-              ...(params.maxCost ? { lte: params.maxCost } : {}),
-            }
-          } : {})
+      specialtyFilters.push({
+        hospitalTreatments: {
+          some: {
+            isAvailable: true,
+            treatment: {
+              OR: [
+                { slug: params.treatment },
+                { name: { contains: params.treatment, mode: 'insensitive' } },
+              ]
+            },
+            ...(params.minCost || params.maxCost ? {
+              avgCostEstimate: {
+                ...(params.minCost ? { gte: params.minCost } : {}),
+                ...(params.maxCost ? { lte: params.maxCost } : {}),
+              }
+            } : {})
+          }
         }
-      };
+      });
+    }
+
+    if (params.department) {
+      specialtyFilters.push({
+        doctors: {
+          some: {
+            specialization: { contains: params.department, mode: 'insensitive' }
+          }
+        }
+      });
+    }
+
+    if (specialtyFilters.length > 0) {
+      where.OR = specialtyFilters;
     }
 
     const orderBy: Record<string, unknown>[] = params.sort === 'rating'
