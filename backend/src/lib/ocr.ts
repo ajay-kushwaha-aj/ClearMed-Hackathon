@@ -99,20 +99,18 @@ async function runGoogleVision(filePath: string): Promise<{ text: string; confid
 }
 
 // ── Main OCR dispatcher ───────────────────────────────────────────────────
+// ── Main OCR dispatcher ───────────────────────────────────────────────────
 export async function processImageWithOcr(filePath: string): Promise<OcrOutput> {
   const startTime = Date.now();
   let rawText = '';
   let confidence = 0;
-  let engine: OcrOutput['engine'] = 'ocr_space'; // Defaulting to ocr_space
+  let engine: OcrOutput['engine'] = 'ocr_space';
 
   if (!fs.existsSync(filePath)) {
     throw new Error(`File not found: ${filePath}`);
   }
 
-  // NOTE: We completely removed the PDF block here so OCR.space can read them!
-
   try {
-    // 1. Try OCR.space first
     const result = await runOcrSpace(filePath);
     rawText = result.text;
     confidence = result.confidence;
@@ -120,7 +118,6 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
   } catch (ocrSpaceErr) {
     console.warn('[OCR] OCR.space failed, trying Google Vision:', (ocrSpaceErr as Error).message);
     try {
-      // 2. Fallback to Google Vision if OCR.space fails or hits rate limits
       const result = await runGoogleVision(filePath);
       rawText = result.text;
       confidence = result.confidence;
@@ -131,8 +128,57 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
     }
   }
 
+  // 1. Remove Patient PII (HIPAA Compliance)
   const piiResult = detectAndRemovePii(rawText);
-  const extractedData = extractBillData(piiResult.redactedText);
+  let extractedData: ExtractedBillData = { confidence: 0 };
+
+  // 2. SMART EXTRACTION: Use Groq to pull exactly what the form needs
+  const groqApiKey = process.env.GROQ_API_KEY;
+  if (groqApiKey && piiResult.redactedText.length > 50) {
+    try {
+      console.log(`[OCR] 🧠 Sending redacted text to Groq for smart extraction...`);
+      const prompt = `You are an expert medical billing assistant. Extract the billing details from the following hospital bill text.
+      
+      RULES:
+      1. Map the hospital's location to the exact official Indian State name (e.g., "Delhi", "Maharashtra").
+      2. Identify the main treatment or surgery name.
+      3. Categorize costs accurately. If a cost is missing, return null. 
+      4. Return ONLY valid JSON with this exact structure:
+      {
+        "hospitalName": "string", "city": "string", "state": "string", "treatmentName": "string", "doctorName": "string",
+        "totalCost": 0, "roomCharges": 0, "surgeryFee": 0, "implantCost": 0, "pharmacyCost": 0,
+        "pathologyCost": 0, "radiologyCost": 0, "gst": 0, "otherCharges": 0,
+        "admissionDate": "YYYY-MM-DD", "dischargeDate": "YYYY-MM-DD", "stayDays": 0
+      }`;
+
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${groqApiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: prompt },
+            { role: 'user', content: piiResult.redactedText }
+          ],
+          temperature: 0.1
+        })
+      });
+
+      const groqJson = await groqRes.json() as any;
+      let jsonStr = groqJson.choices[0].message.content;
+      jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      const parsedData = JSON.parse(jsonStr);
+      extractedData = { ...parsedData, confidence: 0.95 }; // Groq is highly confident
+
+    } catch (error) {
+      console.error("[OCR] ⚠️ Groq extraction failed, falling back to basic regex.", error);
+      extractedData = extractBillData(piiResult.redactedText); // Safely fall back to old regex
+    }
+  } else {
+    extractedData = extractBillData(piiResult.redactedText); // Fall back if no API key
+  }
+
   const processingMs = Date.now() - startTime;
 
   return {
