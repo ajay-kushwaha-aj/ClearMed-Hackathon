@@ -27,6 +27,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
   const [form, setForm] = useState({
+    state: '',
     city: 'Delhi',
     totalCost: '',
     roomCharges: { qty: '', unitPrice: '', amount: '' },
@@ -106,6 +107,22 @@ export default function UploadPage() {
     else setError('Please upload a PDF, JPG, or PNG file');
   }, []);
 
+  const calcTotalFilled = () => {
+    return [
+      form.roomCharges.amount,
+      form.surgeryFee.amount,
+      form.implantCost.amount,
+      form.pharmacyCost.amount,
+      form.pathologyCost.amount,
+      form.radiologyCost.amount,
+      form.gst.amount,
+      form.otherCharges.amount
+    ].reduce((sum, val) => sum + (Number(val) || 0), 0);
+  };
+  const totalFilled = calcTotalFilled();
+  const totalCostNum = Number(form.totalCost) || 0;
+  const remainingAmount = totalCostNum - totalFilled;
+
   const handleSubmit = async () => {
     if (!selectedHospital && (!isNewHospital || !form.newHospitalName)) {
       setError('Please select a hospital or enter a new one.'); return;
@@ -125,6 +142,15 @@ export default function UploadPage() {
     if (!form.totalCost) {
       setError('Total Bill Amount is required.'); return;
     }
+    if (!form.state) {
+      setError('Please select a state.'); return;
+    }
+    if (!form.city) {
+      setError('Please enter a city.'); return;
+    }
+    if (totalCostNum !== totalFilled) {
+      setError(`Filled amount (₹${totalFilled}) must match the Total Bill Amount (₹${totalCostNum}). Please adjust the costs or autofill the remaining amount.`); return;
+    }
     if (!file) {
       setError('Please upload a bill file. It is mandatory.'); return;
     }
@@ -142,6 +168,7 @@ export default function UploadPage() {
       } else if (fallbackTreatmentName) {
         fd.append('newTreatmentName', fallbackTreatmentName);
       }
+      fd.append('state', form.state);
       fd.append('city', form.city);
       fd.append('totalCost', form.totalCost);
       if (form.roomCharges.amount) fd.append('roomCharges', form.roomCharges.amount);
@@ -313,13 +340,29 @@ export default function UploadPage() {
                 )}
               </div>
 
-              {/* City */}
-              <div>
-                <label className="text-sm font-semibold text-gray-700 mb-2 block">City</label>
-                <input list="cities" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input" placeholder="e.g. Delhi" />
-                <datalist id="cities">
-                  {['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune'].map(c => <option key={c} value={c} />)}
-                </datalist>
+              {/* State and City */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block">State <span className="text-red-500">*</span></label>
+                  <select value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} className="input w-full appearance-none">
+                    <option value="">Select State</option>
+                    {[
+                      'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
+                      'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+                      'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+                      'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+                      'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli', 'Daman and Diu', 'Delhi',
+                      'Lakshadweep', 'Puducherry'
+                    ].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 mb-2 block">City <span className="text-red-500">*</span></label>
+                  <input list="cities" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input w-full" placeholder="e.g. Delhi" />
+                  <datalist id="cities">
+                    {['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune'].map(c => <option key={c} value={c} />)}
+                  </datalist>
+                </div>
               </div>
 
               {/* Cost fields */}
@@ -340,6 +383,16 @@ export default function UploadPage() {
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
                     <input type="number" value={form.totalCost} onChange={e => setForm(f => ({ ...f, totalCost: e.target.value }))} className="input pl-7 font-bold text-lg bg-white" placeholder="0" min="0" />
                   </div>
+                  {form.totalCost && (
+                    <div className="mt-3 flex items-center gap-4 text-sm">
+                      <div className="flex bg-white px-3 py-1.5 rounded-lg font-medium border border-gray-100 text-gray-600">
+                        Filled Amount: <span className="ml-1 text-gray-900 font-bold">₹{totalFilled}</span>
+                      </div>
+                      <div className={`flex bg-white px-3 py-1.5 rounded-lg font-medium border ${remainingAmount < 0 ? 'border-red-200 text-red-600' : remainingAmount > 0 ? 'border-amber-200 text-amber-600' : 'border-emerald-200 text-emerald-600'}`}>
+                        Remaining: <span className="ml-1 font-bold">₹{remainingAmount}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-xl border border-gray-200 overflow-hidden text-sm">
@@ -401,7 +454,18 @@ export default function UploadPage() {
 
                       return (
                         <div key={field.key} className="grid grid-cols-1 md:grid-cols-12 gap-2 p-3 items-center hover:bg-gray-50 transition-colors">
-                          <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">{field.label}</div>
+                          <div className="col-span-1 md:col-span-5 font-medium text-gray-700 flex items-center mb-1 md:mb-0">
+                            {field.label}
+                            {field.key === 'otherCharges' && remainingAmount > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => updateField('amount', String((Number(fieldData.amount) || 0) + remainingAmount))}
+                                className="ml-2 text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-bold hover:bg-brand-200"
+                              >
+                                Autofill Remaining
+                              </button>
+                            )}
+                          </div>
                           <div className="grid grid-cols-4 md:col-span-7 gap-2 md:gap-0">
                             <input type="number" min="0" value={fieldData.qty} onChange={e => updateField('qty', e.target.value)} placeholder="Qty" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />
                             <input type="number" min="0" value={fieldData.unitPrice} onChange={e => updateField('unitPrice', e.target.value)} placeholder="Price" className="input text-center px-1 py-1.5 h-[34px] text-xs col-span-1 md:col-span-2" />

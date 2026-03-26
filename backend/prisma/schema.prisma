@@ -243,6 +243,7 @@ model Bill {
   hospitalId    String     @map("hospital_id")
   treatmentId   String     @map("treatment_id")
   city          String
+  state         String?
   totalCost     Float      @map("total_cost")
   roomCharges   Float?     @map("room_charges")
   implantCost   Float?     @map("implant_cost")
