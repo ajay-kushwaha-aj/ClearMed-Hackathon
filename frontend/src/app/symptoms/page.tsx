@@ -38,10 +38,10 @@ interface SymptomResult {
 }
 
 const URGENCY: Record<string, { icon: React.ReactNode; label: string; sub: string; bg: string; border: string; text: string }> = {
-  emergency: { icon: <AlertTriangle className="w-5 h-5"/>, label:'EMERGENCY', sub:'Go to ER immediately', bg:'bg-red-50', border:'border-red-300', text:'text-red-700' },
-  urgent:    { icon: <AlertCircle className="w-5 h-5"/>,   label:'URGENT',    sub:'See a doctor within 24-48 hours', bg:'bg-orange-50', border:'border-orange-300', text:'text-orange-700' },
-  routine:   { icon: <CheckCircle className="w-5 h-5"/>,   label:'ROUTINE',   sub:'Schedule when convenient', bg:'bg-emerald-50', border:'border-emerald-200', text:'text-emerald-700' },
-  elective:  { icon: <Clock className="w-5 h-5"/>,         label:'ELECTIVE',  sub:'Non-urgent procedure', bg:'bg-blue-50', border:'border-blue-200', text:'text-blue-700' },
+  emergency: { icon: <AlertTriangle className="w-5 h-5" />, label: 'EMERGENCY', sub: 'Go to ER immediately', bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-700' },
+  urgent: { icon: <AlertCircle className="w-5 h-5" />, label: 'URGENT', sub: 'See a doctor within 24-48 hours', bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700' },
+  routine: { icon: <CheckCircle className="w-5 h-5" />, label: 'ROUTINE', sub: 'Schedule when convenient', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' },
+  elective: { icon: <Clock className="w-5 h-5" />, label: 'ELECTIVE', sub: 'Non-urgent procedure', bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
 };
 
 const EXAMPLES = [
@@ -64,7 +64,7 @@ export default function SymptomAnalyzerPage() {
   const [city, setCity] = useState('Delhi');
   const [result, setResult] = useState<SymptomResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState<Array<{id: string, text: string, options: string[]}> | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<Array<{ id: string, text: string, options: string[] }> | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
@@ -143,7 +143,7 @@ export default function SymptomAnalyzerPage() {
               <textarea
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); requestQuiz(); }}}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); requestQuiz(); } }}
                 placeholder="Describe your symptoms or doctor's recommendation..."
                 rows={3}
                 className="w-full resize-none text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none leading-relaxed"
@@ -153,20 +153,20 @@ export default function SymptomAnalyzerPage() {
                 <div className="flex items-center gap-2">
                   <select value={city} onChange={e => setCity(e.target.value)}
                     className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer">
-                    {['Delhi','Mumbai','Bengaluru','Chennai','Hyderabad','Kolkata','Pune','Jaipur','Lucknow','Ahmedabad'].map(c=><option key={c}>{c}</option>)}
+                    {['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune', 'Jaipur', 'Lucknow', 'Ahmedabad'].map(c => <option key={c}>{c}</option>)}
                   </select>
-                  <span className="text-xs text-gray-400 hidden sm:inline-flex items-center gap-1"><Info className="w-3 h-3"/> Use plain English or medical terms.</span>
+                  <span className="text-xs text-gray-400 hidden sm:inline-flex items-center gap-1"><Info className="w-3 h-3" /> Use plain English or medical terms.</span>
                 </div>
                 {!quizQuestions && (
                   <button onClick={() => requestQuiz()} disabled={loading || query.length < 3}
                     className="btn btn-primary btn-sm px-5">
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Search className="w-4 h-4"/>}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                     {loading ? 'Analyzing...' : 'Analyze'}
-                    {!loading && <ArrowRight className="w-3.5 h-3.5 ml-0.5"/>}
+                    {!loading && <ArrowRight className="w-3.5 h-3.5 ml-0.5" />}
                   </button>
                 )}
                 {quizQuestions && (
-                  <button onClick={() => {setQuizQuestions(null); setAnswers({}); setResult(null);}} className="text-sm font-semibold text-gray-500 hover:text-gray-700">
+                  <button onClick={() => { setQuizQuestions(null); setAnswers({}); setResult(null); }} className="text-sm font-semibold text-gray-500 hover:text-gray-700">
                     Cancel
                   </button>
                 )}
@@ -212,7 +212,7 @@ export default function SymptomAnalyzerPage() {
 
           {error && (
             <div className="card p-5 border-red-200 bg-red-50 text-center mb-8">
-              <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2"/>
+              <AlertCircle className="w-6 h-6 text-red-400 mx-auto mb-2" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
@@ -226,14 +226,14 @@ export default function SymptomAnalyzerPage() {
                   Clarification Questions
                 </h2>
                 <p className="text-sm text-gray-500 mb-6">Please answer a few quick questions to help us narrow down the most accurate conditions.</p>
-                
+
                 <div className="space-y-5">
                   {quizQuestions.map((q, i) => (
                     <div key={q.id} className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
-                      <p className="font-semibold text-gray-800 mb-3">{i+1}. {q.text}</p>
+                      <p className="font-semibold text-gray-800 mb-3">{i + 1}. {q.text}</p>
                       <div className="flex items-center gap-2 flex-wrap">
                         {(q.options || ['Yes', 'No', 'Not sure']).map((opt: string) => (
-                          <button 
+                          <button
                             key={opt}
                             onClick={() => setAnswers(prev => ({ ...prev, [q.id]: opt }))}
                             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors border ${answers[q.id] === opt ? 'bg-brand-100 border-brand-300 text-brand-700 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
@@ -248,8 +248,8 @@ export default function SymptomAnalyzerPage() {
 
                 <div className="mt-6 flex justify-end">
                   <button onClick={submitFinalAnalysis} disabled={loading} className="btn btn-primary px-6">
-                    {loading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Sparkles className="w-4 h-4"/>}
-                    {loading ? 'Analyzing...' : 'Get Final Diagnosis'}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {loading ? 'Analyzing...' : 'Get Final Analysis'}
                   </button>
                 </div>
               </div>
@@ -305,7 +305,7 @@ export default function SymptomAnalyzerPage() {
                                 {c.matchConfidence}%
                               </p>
                             </div>
-                            {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400"/> : <ChevronDown className="w-5 h-5 text-gray-400"/>}
+                            {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
                           </div>
                         </div>
                       </button>
@@ -318,7 +318,7 @@ export default function SymptomAnalyzerPage() {
                             {c.prerequisites && c.prerequisites.length > 0 && (
                               <div className="bg-gray-50 rounded-xl p-4">
                                 <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                  <ClipboardList className="w-3.5 h-3.5 text-blue-500"/> Common Prerequisites
+                                  <ClipboardList className="w-3.5 h-3.5 text-blue-500" /> Common Prerequisites
                                 </h4>
                                 <ul className="space-y-1.5">
                                   {c.prerequisites.map((p, j) => (
@@ -334,7 +334,7 @@ export default function SymptomAnalyzerPage() {
                             {/* Recovery Time */}
                             <div className="bg-gray-50 rounded-xl p-4">
                               <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5 text-emerald-500"/> Expected Recovery Time
+                                <Clock className="w-3.5 h-3.5 text-emerald-500" /> Expected Recovery Time
                               </h4>
                               <p className="text-sm text-gray-600 leading-relaxed">{c.recoveryTime}</p>
                             </div>
@@ -357,22 +357,22 @@ export default function SymptomAnalyzerPage() {
                             {hospitals.length > 0 ? (
                               <div>
                                 <h4 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
-                                  <Building2 className="w-4 h-4 text-brand-600"/> Hospitals in {city} for {c.department}
+                                  <Building2 className="w-4 h-4 text-brand-600" /> Hospitals in {city} for {c.department}
                                 </h4>
                                 <div className="grid gap-3">
                                   {hospitals.map(h => (
                                     <div key={h.id} className="flex gap-3 bg-white border border-gray-100 hover:border-blue-200 transition-colors p-3.5 rounded-xl items-start shadow-sm hover:shadow-md">
                                       <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
-                                        {h.imageUrl ? <img src={h.imageUrl} alt={h.name} className="w-full h-full object-cover"/> : <Building2 className="w-6 h-6 text-blue-400"/>}
+                                        {h.imageUrl ? <img src={h.imageUrl} alt={h.name} className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6 text-blue-400" />}
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <h5 className="font-semibold text-sm text-gray-800 line-clamp-1">{h.name}</h5>
                                         <div className="flex items-center gap-2 mt-0.5">
                                           <span className="text-xs text-yellow-600 font-semibold flex items-center gap-0.5">
-                                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500"/> {h.rating?.toFixed(1) || '4.5'}
+                                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" /> {h.rating?.toFixed(1) || '4.5'}
                                           </span>
                                           <span className="text-xs text-gray-400 flex items-center gap-0.5">
-                                            <MapPin className="w-3 h-3"/> {h.city}
+                                            <MapPin className="w-3 h-3" /> {h.city}
                                           </span>
                                         </div>
                                         <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{h.address}</p>
@@ -386,7 +386,7 @@ export default function SymptomAnalyzerPage() {
                                         href={`/hospitals/${h.id}`}
                                         className="text-xs font-semibold text-blue-600 hover:text-blue-800 shrink-0 self-center flex items-center gap-1"
                                       >
-                                        View <ArrowRight className="w-3 h-3"/>
+                                        View <ArrowRight className="w-3 h-3" />
                                       </Link>
                                     </div>
                                   ))}
@@ -397,7 +397,7 @@ export default function SymptomAnalyzerPage() {
                                 href={`/search?treatment=${encodeURIComponent(c.name)}&city=${city}`}
                                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 border border-blue-200 hover:bg-blue-50 px-4 py-2.5 rounded-xl transition-all"
                               >
-                                <Building2 className="w-4 h-4"/> Find Hospitals for this Condition
+                                <Building2 className="w-4 h-4" /> Find Hospitals for this Condition
                               </Link>
                             )}
                           </div>
@@ -434,7 +434,7 @@ export default function SymptomAnalyzerPage() {
                         <span className="text-sm text-gray-700">{t}</span>
                         <Link href={`/search?treatment=${encodeURIComponent(t)}&city=${city}`}
                           className="text-xs text-brand-600 font-medium hover:underline flex items-center gap-1">
-                          Compare costs <ArrowRight className="w-3 h-3"/>
+                          Compare costs <ArrowRight className="w-3 h-3" />
                         </Link>
                       </div>
                     ))}
@@ -442,7 +442,7 @@ export default function SymptomAnalyzerPage() {
                   {result.searchQuery && (
                     <Link href={`/search?treatment=${encodeURIComponent(result.searchQuery)}&city=${city}`}
                       className="btn btn-primary btn-md w-full text-sm">
-                      <IndianRupee className="w-4 h-4"/> Compare Treatment Costs in {city}
+                      <IndianRupee className="w-4 h-4" /> Compare Treatment Costs in {city}
                     </Link>
                   )}
                 </div>

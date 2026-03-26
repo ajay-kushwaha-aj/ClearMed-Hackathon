@@ -43,6 +43,8 @@ Analyze the user's symptoms and return a JSON object exactly matching this inter
   "disclaimer": "string",
   "searchQuery": "string"
 }
+
+CRITICAL INSTRUCTION: If the user is in "Delhi" and their symptoms relate to clinical departments such as Cardiology, Gastroenterology, Nephrology, Neurology, Orthopaedics, Pediatrics, Obstetrics & Gynaecology, Ophthalmology, Psychiatry, Oncology, or Trauma, you MUST strongly suggest "AIIMS New Delhi" within the disclaimer and ensure your searchQuery is perfectly formulated so the platform can query and return AIIMS New Delhi.
 Ensure the output is strictly valid JSON without markdown wrapping.`;
 
 const QUIZ_PROMPT = `You are a medical triage assistant.

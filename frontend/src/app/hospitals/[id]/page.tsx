@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import CostRange from '@/components/CostRange';
+import InteractiveTreatmentList from '@/components/InteractiveTreatmentList';
 import { hospitalsAPI, Hospital, formatCurrency } from '@/lib/api';
 
 async function getHospital(slug: string) {
@@ -194,30 +195,7 @@ export default async function HospitalDetailPage({ params }: { params: { id: str
             <div className="card p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Treatments & Costs</h2>
               {hospital.hospitalTreatments.length > 0 ? (
-                <div className="space-y-3">
-                  {hospital.hospitalTreatments.map((ht: {
-                    id: string;
-                    treatment: { id: string; name: string; category: string; specialization: string };
-                    avgCostEstimate?: number;
-                    minCostEstimate?: number;
-                    maxCostEstimate?: number;
-                  }) => (
-                    <div key={ht.id} className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50 hover:bg-brand-50 transition-colors group">
-                      <div>
-                        <p className="font-medium text-gray-800 text-sm group-hover:text-brand-700">{ht.treatment.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">{ht.treatment.category} · {ht.treatment.specialization}</p>
-                      </div>
-                      {ht.avgCostEstimate ? (
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-brand-700">{formatCurrency(ht.avgCostEstimate)}</p>
-                          <p className="text-xs text-gray-400">
-                            {formatCurrency(ht.minCostEstimate || 0)} – {formatCurrency(ht.maxCostEstimate || 0)}
-                          </p>
-                        </div>
-                      ) : <span className="text-xs text-gray-400">Cost N/A</span>}
-                    </div>
-                  ))}
-                </div>
+                <InteractiveTreatmentList treatments={hospital.hospitalTreatments} />
               ) : (
                 <div className="text-center py-8">
                   <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />

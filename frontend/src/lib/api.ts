@@ -18,6 +18,7 @@ export interface Hospital {
   address: string; phone?: string; website?: string; type: 'GOVERNMENT' | 'PRIVATE' | 'TRUST' | 'CHARITABLE';
   beds?: number; naabhStatus: boolean; rating?: number; lat?: number; lng?: number;
   description?: string; established?: number;
+  departments?: any;
   doctors: Doctor[];
   hospitalTreatments: HospitalTreatment[];
   costSummary?: CostSummary;
@@ -39,6 +40,7 @@ export interface Doctor {
 export interface HospitalTreatment {
   id: string; hospitalId: string; treatmentId: string;
   avgCostEstimate?: number; minCostEstimate?: number; maxCostEstimate?: number;
+  costBreakdown?: any;
   treatment: Treatment;
 }
 
