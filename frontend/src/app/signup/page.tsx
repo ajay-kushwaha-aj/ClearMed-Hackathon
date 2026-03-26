@@ -11,7 +11,9 @@ const CITIES = ['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Pune', 
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', city: '', referralCode: '' });
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -32,13 +34,23 @@ export default function SignupPage() {
     setLoading(true);
     setError('');
 
-    if (!form.email && !form.phone) {
-      setError('Please enter your email OR phone number');
+    if (!form.email) {
+      setError('Please enter your email address');
+      setLoading(false);
+      return;
+    }
+    if (!form.city) {
+      setError('Please select your city');
       setLoading(false);
       return;
     }
     if (form.password.length < 6) {
       setError('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+    if (form.password !== confirmPassword) {
+      setError('Passwords do not match');
       setLoading(false);
       return;
     }
@@ -147,16 +159,16 @@ export default function SignupPage() {
 
                 {/* Email */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Email Address *</label>
                   <input type="email" placeholder="you@example.com" value={form.email}
-                    onChange={e => set('email', e.target.value)}
+                    onChange={e => set('email', e.target.value)} required
                     className="input w-full" autoComplete="email" />
                 </div>
 
                 {/* Phone */}
                 <div>
                   <label className="block text-xs font-semibold text-gray-600 mb-1.5">
-                    Mobile Number <span className="text-gray-400 font-normal">(or email above)</span>
+                    Mobile Number <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -165,7 +177,6 @@ export default function SignupPage() {
                       onChange={e => set('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
                       className="input pl-16 w-full" autoComplete="tel" />
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">At least one of email or phone is required</p>
                 </div>
 
                 {/* Password */}
@@ -183,12 +194,27 @@ export default function SignupPage() {
                   </div>
                 </div>
 
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Confirm Password *</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input type={showConfirmPwd ? 'text' : 'password'} placeholder="Confirm your password"
+                      value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                      required className="input pl-10 pr-10 w-full" autoComplete="new-password" />
+                    <button type="button" onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      {showConfirmPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
                 {/* City */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Your City</label>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Your City *</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                    <select value={form.city} onChange={e => set('city', e.target.value)}
+                    <select value={form.city} onChange={e => set('city', e.target.value)} required
                       className="input pl-10 w-full cursor-pointer appearance-none">
                       <option value="">Select your city</option>
                       {CITIES.map(c => <option key={c}>{c}</option>)}

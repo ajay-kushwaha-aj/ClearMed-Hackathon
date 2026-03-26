@@ -47,7 +47,7 @@ export default function UploadPage() {
   useEffect(() => {
     hospitalsAPI.list({ city: form.city, limit: 50 } as any).then(r => {
       setHospitalResults(r.data || []);
-    }).catch(() => {});
+    }).catch(() => { });
   }, [form.city]);
 
   const searchHospitals = async (q: string) => {
@@ -56,7 +56,7 @@ export default function UploadPage() {
     try {
       const res = await hospitalsAPI.list({ city: form.city });
       setHospitalResults(res.data.filter(h => h.name.toLowerCase().includes(q.toLowerCase())).slice(0, 6));
-    } catch {}
+    } catch { }
   };
 
   const searchTreatments = async (q: string) => {
@@ -65,7 +65,7 @@ export default function UploadPage() {
     try {
       const res = await treatmentsAPI.search(q);
       setTreatmentResults(res.data);
-    } catch {}
+    } catch { }
   };
 
   const handleFileSelect = async (f: File) => {
@@ -117,13 +117,16 @@ export default function UploadPage() {
       if (treatmentSearch && treatmentSearch.trim().length > 0) {
         fallbackTreatmentName = treatmentSearch.trim();
       } else {
-        setError('Please select or type a treatment.'); 
+        setError('Please select or type a treatment.');
         return;
       }
     }
-    
+
     if (!form.totalCost) {
       setError('Total Bill Amount is required.'); return;
+    }
+    if (!file) {
+      setError('Please upload a bill file. It is mandatory.'); return;
     }
     setLoading(true); setError('');
     try {
@@ -158,7 +161,7 @@ export default function UploadPage() {
         try {
           const user = JSON.parse(userStr);
           if (user.id) fd.append('userId', user.id);
-        } catch (e) {}
+        } catch (e) { }
       }
 
       const res = await billsAPI.upload(fd);
@@ -304,7 +307,7 @@ export default function UploadPage() {
                       </div>
                     )}
                     {!selectedTreatment && treatmentSearch && treatmentResults.length === 0 && (
-                       <p className="text-xs text-brand-600 mt-2">Custom treatment will be submitted.</p>
+                      <p className="text-xs text-brand-600 mt-2">Custom treatment will be submitted.</p>
                     )}
                   </div>
                 )}
@@ -329,7 +332,7 @@ export default function UploadPage() {
                     </span>
                   )}
                 </label>
-                
+
                 {/* Total Cost always required at the top */}
                 <div className="mb-6 bg-brand-50 p-4 rounded-xl border border-brand-200">
                   <label className="text-sm font-bold text-brand-900 mb-1 block">Total Bill Amount <span className="text-red-500">*</span></label>
@@ -358,12 +361,12 @@ export default function UploadPage() {
                       { key: 'otherCharges', label: 'Other Charges' },
                     ].map(field => {
                       const fieldData = form[field.key as keyof typeof form] as { qty: string, unitPrice: string, amount: string };
-                      
+
                       const updateField = (k: keyof typeof fieldData, v: string) => {
                         setForm(f => {
                           const currentField = f[field.key as keyof typeof f] as { qty: string, unitPrice: string, amount: string };
                           const newField = { ...currentField, [k]: v };
-                          
+
                           if ((k === 'qty' || k === 'unitPrice') && newField.qty && newField.unitPrice) {
                             newField.amount = String(Number(newField.qty) * Number(newField.unitPrice));
                           }
@@ -429,7 +432,7 @@ export default function UploadPage() {
               {/* File upload */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Bill File (Optional)
+                  Bill File <span className="text-red-500">*</span>
                   <span className="ml-2 text-xs text-gray-400 font-normal">PDF, JPG or PNG · Max 10MB</span>
                 </label>
                 {file ? (
@@ -463,7 +466,7 @@ export default function UploadPage() {
                 )}
                 <div className="flex items-start gap-2 mt-2">
                   <Info className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
-                  <p className="text-xs text-gray-400">File is optional. You can enter costs manually above without uploading a file.</p>
+                  <p className="text-xs text-gray-400">Uploading a bill file is mandatory for verification.</p>
                 </div>
               </div>
 
