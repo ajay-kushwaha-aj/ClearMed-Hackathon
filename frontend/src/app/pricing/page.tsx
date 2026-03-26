@@ -188,9 +188,9 @@ export default function PricingPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-6 text-center">Why hospitals partner with ClearMed</h2>
               <div className="grid sm:grid-cols-3 gap-5">
                 {[
-                  { icon: <Users className="w-6 h-6 text-brand-500"/>, title: 'Qualified Patient Leads', desc: 'Receive enquiries from patients already researching your treatments — higher intent than generic ads.' },
-                  { icon: <Shield className="w-6 h-6 text-emerald-500"/>, title: 'Build Trust with Transparency', desc: 'Hospitals with Verified badges and visible cost data get 3× more profile views than unverified competitors.' },
-                  { icon: <BarChart3 className="w-6 h-6 text-purple-500"/>, title: 'Competitive Intelligence', desc: 'See exactly how your costs compare to competing hospitals in your city with live market data.' },
+                  { icon: <Users className="w-6 h-6 text-brand-500" />, title: 'Qualified Patient Leads', desc: 'Receive enquiries from patients already researching your treatments — higher intent than generic ads.' },
+                  { icon: <Shield className="w-6 h-6 text-emerald-500" />, title: 'Build Trust with Transparency', desc: 'Hospitals with Verified badges and visible cost data get 3× more profile views than unverified competitors.' },
+                  { icon: <BarChart3 className="w-6 h-6 text-purple-500" />, title: 'Competitive Intelligence', desc: 'See exactly how your costs compare to competing hospitals in your city with live market data.' },
                 ].map(f => (
                   <div key={f.title} className="text-center">
                     <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">{f.icon}</div>
@@ -277,7 +277,7 @@ export default function PricingPage() {
               ))}
             </div>
             <div className="text-center mt-6">
-              <p className="text-sm text-gray-500">Have more questions? <a href="mailto:partners@clearmed.in" className="text-brand-600 font-medium hover:underline">partners@clearmed.in</a></p>
+              <p className="text-sm text-gray-500">Have more questions? <a href="mailto:partners@clearmed.online" className="text-brand-600 font-medium hover:underline">partners@clearmed.online</a></p>
             </div>
           </div>
         </div>

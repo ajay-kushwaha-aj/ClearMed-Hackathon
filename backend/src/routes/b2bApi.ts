@@ -68,7 +68,7 @@ async function apiKeyAuth(req: Request, res: Response, next: NextFunction) {
   res.on('finish', () => {
     prisma.apiUsageLog.create({
       data: { keyId: apiKey.id, endpoint: req.path, method: req.method, status: res.statusCode, ms: Date.now() - start },
-    }).catch(() => {});
+    }).catch(() => { });
   });
 
   (req as any).apiKey = apiKey;
@@ -242,7 +242,7 @@ router.get('/docs', (req: Request, res: Response) => {
       { method: 'GET', path: '/outcomes/:hospitalId/:treatmentId', description: 'ClearMed Score + outcome components', plans: 'All' },
       { method: 'GET', path: '/bulk/costs', description: 'Bulk cost data for all treatments', plans: 'Professional, Enterprise' },
     ],
-    contact: 'api@clearmed.in',
+    contact: 'api@clearmed.online',
   });
 });
 

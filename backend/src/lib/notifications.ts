@@ -126,7 +126,7 @@ export async function sendPendingNotifications(limit = 50): Promise<void> {
     return;
   }
 
-  const FROM = `"ClearMed" <${process.env.SMTP_FROM || 'noreply@clearmed.in'}>`;
+  const FROM = `"ClearMed" <${process.env.SMTP_FROM || 'noreply@clearmed.online'}>`;
 
   for (const notif of pending) {
     const userAny = (notif as any).user;

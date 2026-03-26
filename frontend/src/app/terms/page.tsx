@@ -83,7 +83,7 @@ export default function TermsPage() {
           ))}
 
           <p className="text-xs text-center text-gray-400">
-            Questions? Contact legal@clearmed.in ·{' '}
+            Questions? Contact legal@clearmed.online ·{' '}
             <Link href="/privacy" className="hover:underline">Privacy Policy</Link>
           </p>
         </div>

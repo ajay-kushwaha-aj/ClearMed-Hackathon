@@ -58,15 +58,15 @@ router.get('/treatment/:slug', async (req: Request, res: Response, next: NextFun
     const totalHospitals = await prisma.hospitalTreatment.count({ where: { treatmentId: treatment.id } });
 
     // Generate SEO metadata
-    const validCities = costByCity.filter(Boolean) as Array<{city:string;avg:number;min:number;max:number;count:number}>;
+    const validCities = costByCity.filter(Boolean) as Array<{ city: string; avg: number; min: number; max: number; count: number }>;
     const delhiCost = validCities.find(c => c.city === 'Delhi');
     const cheapestCity = [...validCities].sort((a, b) => a.avg - b.avg)[0];
 
-    const avgFmt = (n: number) => n >= 100000 ? `₹${(n/100000).toFixed(1)} lakh` : `₹${Math.round(n/1000)}K`;
+    const avgFmt = (n: number) => n >= 100000 ? `₹${(n / 100000).toFixed(1)} lakh` : `₹${Math.round(n / 1000)}K`;
 
     const seoTitle = `${treatment.name} Cost in India 2025 — Compare ${totalHospitals}+ Hospitals | ClearMed`;
     const seoDescription = delhiCost
-      ? `${treatment.name} average cost in Delhi is ${avgFmt(delhiCost.avg)}. Compare prices across ${totalHospitals}+ hospitals in ${validCities.map(c=>c.city).join(', ')}. Real data from verified patient bills.`
+      ? `${treatment.name} average cost in Delhi is ${avgFmt(delhiCost.avg)}. Compare prices across ${totalHospitals}+ hospitals in ${validCities.map(c => c.city).join(', ')}. Real data from verified patient bills.`
       : `Compare ${treatment.name} cost across ${totalHospitals}+ hospitals in India. Get transparent pricing from verified patient bills.`;
 
     const seoKeywords = [
@@ -84,7 +84,7 @@ router.get('/treatment/:slug', async (req: Request, res: Response, next: NextFun
       {
         question: `What is the average cost of ${treatment.name} in India?`,
         answer: validCities.length > 0
-          ? `The average cost of ${treatment.name} in India ranges from ${avgFmt(Math.min(...validCities.map(c=>c.min)))} to ${avgFmt(Math.max(...validCities.map(c=>c.max)))}. In Delhi, it costs around ${delhiCost ? avgFmt(delhiCost.avg) : 'varies'}.`
+          ? `The average cost of ${treatment.name} in India ranges from ${avgFmt(Math.min(...validCities.map(c => c.min)))} to ${avgFmt(Math.max(...validCities.map(c => c.max)))}. In Delhi, it costs around ${delhiCost ? avgFmt(delhiCost.avg) : 'varies'}.`
           : `The cost varies significantly based on hospital type, city, and patient-specific factors. Check our hospital comparison for real pricing.`,
       },
       {
@@ -143,7 +143,7 @@ router.get('/sitemap/treatments', async (req: Request, res: Response, next: Next
 router.get('/sitemap.xml', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const treatments = await prisma.treatment.findMany({ select: { slug: true } });
-    const baseUrl = process.env.FRONTEND_URL || 'https://clearmed.in';
+    const baseUrl = process.env.FRONTEND_URL || 'https://clearmed.online';
     const urls = [
       `${baseUrl}/`, `${baseUrl}/search`, `${baseUrl}/symptoms`,
       `${baseUrl}/dashboard`, `${baseUrl}/community`, `${baseUrl}/leaderboard`,

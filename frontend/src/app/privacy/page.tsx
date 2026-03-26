@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8">
             <p className="text-sm text-amber-800">
-              <strong>DPDP Act 2023 Notice:</strong> This Privacy Policy is governed by India's Digital Personal Data Protection Act 2023. You have the right to access, correct, and erase your personal data. Contact us at <a href="mailto:privacy@clearmed.in" className="underline">privacy@clearmed.in</a> to exercise these rights.
+              <strong>DPDP Act 2023 Notice:</strong> This Privacy Policy is governed by India's Digital Personal Data Protection Act 2023. You have the right to access, correct, and erase your personal data. Contact us at <a href="mailto:privacy@clearmed.online" className="underline">privacy@clearmed.online</a> to exercise these rights.
             </p>
           </div>
 
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
             {[
               {
                 title: '1. Who We Are',
-                content: `ClearMed is a healthcare cost transparency platform operated in India. We help patients compare verified hospital costs, read patient reviews, and make informed healthcare decisions. Our registered address is available on request.\n\nData Controller: ClearMed Health Technologies Pvt. Ltd.\nContact: privacy@clearmed.in`,
+                content: `ClearMed is a healthcare cost transparency platform operated in India. We help patients compare verified hospital costs, read patient reviews, and make informed healthcare decisions. Our registered address is available on request.\n\nData Controller: ClearMed Health Technologies Pvt. Ltd.\nContact: privacy@clearmed.online`,
               },
               {
                 title: '2. What Data We Collect',
@@ -58,7 +58,7 @@ export default function PrivacyPage() {
               },
               {
                 title: '5. Your Rights Under DPDP Act 2023',
-                content: `As a data principal under India's DPDP Act 2023, you have the right to:\n\n• **Access:** Request a copy of all personal data we hold about you\n• **Correction:** Request correction of inaccurate data\n• **Erasure:** Request deletion of your personal data (processed within 30 days)\n• **Grievance Redressal:** Contact our Data Protection Officer\n• **Nominee:** Designate a nominee to exercise rights in the event of death or incapacity\n\nExercise your rights at: privacy@clearmed.in or via the Data Erasure Request form on our platform.`,
+                content: `As a data principal under India's DPDP Act 2023, you have the right to:\n\n• **Access:** Request a copy of all personal data we hold about you\n• **Correction:** Request correction of inaccurate data\n• **Erasure:** Request deletion of your personal data (processed within 30 days)\n• **Grievance Redressal:** Contact our Data Protection Officer\n• **Nominee:** Designate a nominee to exercise rights in the event of death or incapacity\n\nExercise your rights at: privacy@clearmed.online or via the Data Erasure Request form on our platform.`,
               },
               {
                 title: '6. PII Removal from Bills',
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
               },
               {
                 title: '9. Contact & Grievance',
-                content: `Data Protection Officer: grievance@clearmed.in\nGeneral Privacy: privacy@clearmed.in\nResponse time: 72 hours acknowledgement, 30 days resolution\n\nIf unsatisfied with our response, you may file a complaint with India's Data Protection Board (once operational under DPDP Act 2023).`,
+                content: `Data Protection Officer: grievance@clearmed.online\nGeneral Privacy: privacy@clearmed.online\nResponse time: 72 hours acknowledgement, 30 days resolution\n\nIf unsatisfied with our response, you may file a complaint with India's Data Protection Board (once operational under DPDP Act 2023).`,
               },
             ].map(section => (
               <section key={section.title} className="card p-6">
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
               <p className="text-sm text-brand-800">
                 <strong>Request Data Deletion:</strong> To exercise your right to erasure under DPDP Act 2023,
                 {' '}<Link href="/privacy/erasure" className="underline font-semibold">submit a deletion request here</Link>
-                {' '}or email privacy@clearmed.in. We will confirm processing within 30 days.
+                {' '}or email privacy@clearmed.online. We will confirm processing within 30 days.
               </p>
             </div>
           </div>
