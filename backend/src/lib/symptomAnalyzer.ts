@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 export interface SymptomQuiz {
   questions: Array<{
     id: string;
@@ -69,47 +67,81 @@ Output exactly this JSON format:
 Ensure strictly valid JSON without markdown wrapping.`;
 
 export async function generateSymptomQuiz(symptoms: string): Promise<SymptomQuiz> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY environment variable is missing");
+  const apiKey = process.env.GROQ_API_KEY; // Swapped to Groq
+  if (!apiKey) throw new Error("GROQ_API_KEY environment variable is missing");
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { responseMimeType: 'application/json' } });
-    const prompt = `${QUIZ_PROMPT}\n\nSymptoms: "${symptoms}"`;
-    const result = await model.generateContent(prompt);
-    let responseText = result.response.text();
+    const promptText = `${QUIZ_PROMPT}\n\nSymptoms: "${symptoms}"`;
+
+    // Natively fetch from Groq API
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: promptText }],
+        temperature: 0.2 // Kept low for strict JSON output
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Groq API Error: ${errText}`);
+    }
+
+    const result = await response.json() as any;
+    let responseText = result.choices[0].message.content;
+
+    // Clean JSON parsing
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(responseText || '{}') as Partial<SymptomQuiz>;
+
     return { questions: parsed.questions || [] };
   } catch (error) {
-    console.error("Gemini Quiz API Error:", error);
+    console.error("Groq Quiz API Error:", error);
     throw new Error("Failed to generate clarification questions");
   }
 }
 
 export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', answers?: { question: string, answer: string }[]): Promise<SymptomAnalysisResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY; // Swapped to Groq
   if (!apiKey) {
-    throw new Error("GEMINI_API_KEY environment variable is missing");
+    throw new Error("GROQ_API_KEY environment variable is missing");
   }
 
   try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
-    });
-
-    let prompt = `${SYSTEM_PROMPT}\n\nSymptoms: "${symptoms}"\nCity: ${city}`;
+    let promptText = `${SYSTEM_PROMPT}\n\nSymptoms: "${symptoms}"\nCity: ${city}`;
     if (answers && answers.length > 0) {
-      prompt += `\n\nPatient answered the following clarification questions:\n`;
-      answers.forEach(a => prompt += `- ${a.question} -> ${a.answer}\n`);
+      promptText += `\n\nPatient answered the following clarification questions:\n`;
+      answers.forEach(a => promptText += `- ${a.question} -> ${a.answer}\n`);
     }
 
-    const result = await model.generateContent(prompt);
-    let responseText = result.response.text();
+    // Natively fetch from Groq API
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: promptText }],
+        temperature: 0.1 // Kept low for strict JSON output
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Groq API Error: ${errText}`);
+    }
+
+    const result = await response.json() as any;
+    let responseText = result.choices[0].message.content;
+
+    // Clean JSON parsing
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(responseText || '{}') as Partial<SymptomAnalysisResult>;
 
@@ -124,7 +156,7 @@ export async function analyzeSymptoms(symptoms: string, city: string = 'Delhi', 
 
     return safeParsed;
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Groq Analysis API Error:", error);
     throw new Error("Failed to analyze symptoms");
   }
 }
