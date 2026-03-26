@@ -33,20 +33,31 @@ const upload = multer({
 
 // Extract bill data (preview mode)
 // Extract bill data (preview mode)
+// Extract bill data (preview mode)
 router.post('/extract', upload.single('bill'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'No file uploaded' });
       return;
     }
+
+    console.log(`\n[OCR] 📄 Starting extraction preview for: ${req.file.originalname}`);
+
     const { processImageWithOcr } = await import('../lib/ocr');
     const ocrOutput = await processImageWithOcr(req.file.path);
 
-    // FIX: Delete the temporary preview file immediately to save disk space
+    // X-Ray Logging: Print exactly what happened
+    console.log(`[OCR] 🧠 Engine Used: ${ocrOutput.engine}`);
+    console.log(`[OCR] 📝 Characters Read: ${ocrOutput.rawText.length}`);
+    console.log(`[OCR] 🎯 Final Extracted Data Payload:`);
+    console.log(JSON.stringify(ocrOutput.extractedData, null, 2));
+
+    // Delete the temporary preview file immediately to save disk space
     fs.unlink(req.file.path, () => { });
 
     res.json({ data: ocrOutput.extractedData });
   } catch (err) {
+    console.error(`[OCR] ❌ Extraction completely failed:`, err);
     if (req.file) fs.unlink(req.file.path, () => { });
     next(err);
   }

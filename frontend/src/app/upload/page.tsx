@@ -50,6 +50,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
   const [error, setError] = useState('');
+  const [extractSuccess, setExtractSuccess] = useState(false);
 
   // Hospital search
   const [hospitalSearch, setHospitalSearch] = useState('');
@@ -111,14 +112,25 @@ export default function UploadPage() {
   const handleFileSelect = async (f: File) => {
     setFile(f);
     setIsExtracting(true);
+    setExtractSuccess(false); // Reset success state
+    setError(''); // Clear old errors
+
     try {
       const fd = new FormData();
       fd.append('bill', f);
       const res = await billsAPI.extract(fd);
+
       if (res.data) {
         const d = res.data;
 
-        // FIX: Safely convert to string, ensuring '0' doesn't get ignored
+        // Safety Check: Did the AI actually find any cost numbers?
+        // (Checking if more than just the 'confidence' key was returned)
+        if (Object.keys(d).length <= 1 || !d.totalCost) {
+          setError("We couldn't clearly read the amounts on this bill. Please fill them in manually.");
+          setIsExtracting(false);
+          return;
+        }
+
         const safeStr = (val: any) => (val !== undefined && val !== null) ? String(val) : undefined;
 
         setForm(prev => ({
@@ -135,9 +147,13 @@ export default function UploadPage() {
           admissionDate: d.admissionDate || prev.admissionDate,
           dischargeDate: d.dischargeDate || prev.dischargeDate,
         }));
+
+        // ONLY mark as success if we successfully mapped the data
+        setExtractSuccess(true);
       }
     } catch (err) {
       console.error('OCR Extraction failed', err);
+      setError("Failed to process the bill document. Please enter details manually.");
     } finally {
       setIsExtracting(false);
     }
