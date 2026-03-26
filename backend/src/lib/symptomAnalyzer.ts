@@ -4,6 +4,7 @@ export interface SymptomQuiz {
   questions: Array<{
     id: string;
     text: string;
+    options: string[];
   }>;
 }
 
@@ -48,12 +49,21 @@ Ensure the output is strictly valid JSON without markdown wrapping.`;
 
 const QUIZ_PROMPT = `You are a medical triage assistant.
 The user has reported the following initial symptoms.
-Generate 3 to 5 simple, highly-relevant YES/NO or true/false clarifying questions to help narrow down the possible medical conditions.
+Generate 3 to 5 simple, highly-relevant clarifying questions to help narrow down the possible medical conditions.
+For each question, provide 3 to 5 specific, short answer options tailored perfectly to the question. Do NOT just use generic "Yes", "No", "Not sure" unless it is a strict binary question.
 Output exactly this JSON format:
 {
   "questions": [
-    { "id": "q1", "text": "Do you have a fever?" },
-    { "id": "q2", "text": "Is the pain spreading?" }
+    { 
+      "id": "q1", 
+      "text": "How long have you had this pain?",
+      "options": ["Less than a day", "A few days", "Over a week", "Not sure"]
+    },
+    { 
+      "id": "q2", 
+      "text": "Is it affecting both eyes or just one?",
+      "options": ["Only left eye", "Only right eye", "Both eyes", "Not sure"]
+    }
   ]
 }
 Ensure strictly valid JSON without markdown wrapping.`;

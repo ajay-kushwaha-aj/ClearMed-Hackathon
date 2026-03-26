@@ -64,7 +64,7 @@ export default function SymptomAnalyzerPage() {
   const [city, setCity] = useState('Delhi');
   const [result, setResult] = useState<SymptomResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [quizQuestions, setQuizQuestions] = useState<Array<{id: string, text: string}> | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<Array<{id: string, text: string, options: string[]}> | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [error, setError] = useState('');
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
@@ -231,12 +231,12 @@ export default function SymptomAnalyzerPage() {
                   {quizQuestions.map((q, i) => (
                     <div key={q.id} className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
                       <p className="font-semibold text-gray-800 mb-3">{i+1}. {q.text}</p>
-                      <div className="flex items-center gap-3">
-                        {['Yes', 'No', 'Not sure'].map(opt => (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {(q.options || ['Yes', 'No', 'Not sure']).map((opt: string) => (
                           <button 
                             key={opt}
                             onClick={() => setAnswers(prev => ({ ...prev, [q.id]: opt }))}
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors border ${answers[q.id] === opt ? 'bg-brand-100 border-brand-300 text-brand-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors border ${answers[q.id] === opt ? 'bg-brand-100 border-brand-300 text-brand-700 shadow-sm' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}
                           >
                             {opt}
                           </button>
@@ -294,7 +294,9 @@ export default function SymptomAnalyzerPage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{c.description}</p>
+                            <p className={`text-sm mt-1 sm:mt-1.5 ${isExpanded ? 'text-gray-700 font-medium' : 'text-gray-500 line-clamp-2'}`}>
+                              {c.description}
+                            </p>
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
                             <div className="text-right">
