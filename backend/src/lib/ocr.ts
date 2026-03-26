@@ -47,7 +47,11 @@ async function runOcrSpace(filePath: string): Promise<{ text: string; confidence
     throw new Error(`OCR.space HTTP error: ${response.statusText}`);
   }
 
-  const result = await response.json();
+  const result = await response.json() as {
+    IsErroredOnProcessing: boolean;
+    ErrorMessage?: string[];
+    ParsedResults?: Array<{ ParsedText: string }>;
+  };
 
   if (result.IsErroredOnProcessing) {
     throw new Error(`OCR.space processing error: ${result.ErrorMessage?.[0]}`);
