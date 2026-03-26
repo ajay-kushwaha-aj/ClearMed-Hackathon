@@ -4,6 +4,44 @@ import { Upload, FileText, Image as ImageIcon, X, CheckCircle, AlertCircle, Load
 import Navbar from '@/components/Navbar';
 import { billsAPI, treatmentsAPI, hospitalsAPI, Treatment, Hospital } from '@/lib/api';
 
+const INDIA_CITIES: Record<string, string[]> = {
+  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore'],
+  'Arunachal Pradesh': ['Itanagar', 'Tawang', 'Naharlagun'],
+  'Assam': ['Guwahati', 'Silchar', 'Dibrugarh', 'Jorhat'],
+  'Bihar': ['Patna', 'Gaya', 'Bhagalpur', 'Muzaffarpur'],
+  'Chhattisgarh': ['Raipur', 'Bhilai', 'Bilaspur', 'Korba'],
+  'Goa': ['Panaji', 'Margao', 'Vasco da Gama'],
+  'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Gandhinagar'],
+  'Haryana': ['Faridabad', 'Gurugram', 'Panipat', 'Ambala'],
+  'Himachal Pradesh': ['Shimla', 'Dharamshala', 'Mandi'],
+  'Jharkhand': ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Bokaro'],
+  'Karnataka': ['Bengaluru', 'Mysuru', 'Mangaluru', 'Hubballi'],
+  'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode', 'Thrissur'],
+  'Madhya Pradesh': ['Indore', 'Bhopal', 'Jabalpur', 'Gwalior'],
+  'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik'],
+  'Manipur': ['Imphal', 'Churachandpur'],
+  'Meghalaya': ['Shillong', 'Tura'],
+  'Mizoram': ['Aizawl', 'Lunglei'],
+  'Nagaland': ['Dimapur', 'Kohima'],
+  'Odisha': ['Bhubaneswar', 'Cuttack', 'Rourkela', 'Puri'],
+  'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala', 'Chandigarh'],
+  'Rajasthan': ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota'],
+  'Sikkim': ['Gangtok', 'Namchi'],
+  'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli'],
+  'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad'],
+  'Tripura': ['Agartala', 'Udaipur'],
+  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Ghaziabad', 'Agra', 'Varanasi', 'Noida'],
+  'Uttarakhand': ['Dehradun', 'Haridwar', 'Roorkee', 'Rishikesh'],
+  'West Bengal': ['Kolkata', 'Howrah', 'Siliguri', 'Durgapur'],
+  'Andaman and Nicobar Islands': ['Port Blair'],
+  'Chandigarh': ['Chandigarh'],
+  'Dadra and Nagar Haveli': ['Silvassa'],
+  'Daman and Diu': ['Daman', 'Diu'],
+  'Delhi': ['New Delhi', 'North Delhi', 'South Delhi', 'East Delhi', 'West Delhi'],
+  'Lakshadweep': ['Kavaratti'],
+  'Puducherry': ['Puducherry', 'Ozhukarai']
+};
+
 type Step = 'hospital' | 'form' | 'success';
 
 export default function UploadPage() {
@@ -344,7 +382,7 @@ export default function UploadPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm font-semibold text-gray-700 mb-2 block">State <span className="text-red-500">*</span></label>
-                  <select value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value }))} className="input w-full appearance-none">
+                  <select value={form.state} onChange={e => setForm(f => ({ ...f, state: e.target.value, city: '' }))} className="input w-full appearance-none">
                     <option value="">Select State</option>
                     {[
                       'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
@@ -358,10 +396,10 @@ export default function UploadPage() {
                 </div>
                 <div>
                   <label className="text-sm font-semibold text-gray-700 mb-2 block">City <span className="text-red-500">*</span></label>
-                  <input list="cities" value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input w-full" placeholder="e.g. Delhi" />
-                  <datalist id="cities">
-                    {['Delhi', 'Mumbai', 'Bengaluru', 'Chennai', 'Hyderabad', 'Kolkata', 'Pune'].map(c => <option key={c} value={c} />)}
-                  </datalist>
+                  <select disabled={!form.state} value={form.city} onChange={e => setForm(f => ({ ...f, city: e.target.value }))} className="input w-full appearance-none">
+                    <option value="">{form.state ? 'Select City' : 'Select State First'}</option>
+                    {form.state && INDIA_CITIES[form.state]?.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
                 </div>
               </div>
 
