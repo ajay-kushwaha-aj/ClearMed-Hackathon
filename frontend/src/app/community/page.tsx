@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Star, ThumbsUp, CheckCircle, SortAsc, MessageSquare, Upload } from 'lucide-react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -39,10 +39,14 @@ export default function CommunityPage() {
   const [showModal, setShowModal] = useState(false);
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [treatments, setTreatments] = useState<any[]>([]);
-  const [form, setForm] = useState({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '' });
+  const [form, setForm] = useState<{
+    hospitalId: string; treatmentId: string; overallScore: number; reviewText: string;
+    file: File | null; totalCost: string; city: string;
+  }>({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '', file: null, totalCost: '', city: 'Delhi' });
   const [submitting, setSubmitting] = useState(false);
   const [filter, setFilter] = useState<'all'|'verified'>('all');
   const [hoverStar, setHoverStar] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   let vSum=0,vCount=0,sSum=0,sCount=0,uSum=0,uCount=0;
   reviews.forEach(r=>{
@@ -80,22 +84,52 @@ export default function CommunityPage() {
   };
 
   const submitReview = async () => {
-    if (!form.hospitalId || !form.treatmentId || !form.reviewText) return alert("Please fill all fields");
+    if (!form.hospitalId || !form.treatmentId || !form.reviewText) return alert("Please fill required fields (Hospital, Treatment, Review Details)");
+    if (form.file && !form.totalCost) return alert("Please enter the Total Cost from your bill");
+    
     setSubmitting(true);
     try {
       const userStr = localStorage.getItem('clearmed_user');
       const user = userStr ? JSON.parse(userStr) : null;
-      const res = await fetch(`${API}/reviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, userId: user?.id })
-      });
+      let res;
+      
+      if (form.file) {
+        // Find hospital to grab its city
+        const selectedHospital = hospitals.find(h => h.id === form.hospitalId);
+        const cityToUse = selectedHospital ? selectedHospital.city : 'Delhi';
+
+        const fd = new FormData();
+        fd.append('hospitalId', form.hospitalId);
+        fd.append('treatmentId', form.treatmentId);
+        fd.append('totalCost', form.totalCost);
+        fd.append('city', cityToUse);
+        fd.append('rating', form.overallScore.toString());
+        fd.append('reviewText', form.reviewText);
+        if (user?.id) fd.append('userId', user.id);
+        fd.append('bill', form.file);
+
+        res = await fetch(`${API}/bills/upload`, { method: 'POST', body: fd });
+      } else {
+        res = await fetch(`${API}/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            hospitalId: form.hospitalId,
+            treatmentId: form.treatmentId,
+            overallScore: form.overallScore,
+            reviewText: form.reviewText,
+            userId: user?.id
+          })
+        });
+      }
+
       if (res.ok) {
         setShowModal(false);
-        setForm({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '' });
-        alert('Review submitted successfully! It will appear once verified by moderators.');
+        setForm({ hospitalId: '', treatmentId: '', overallScore: 5, reviewText: '', file: null, totalCost: '', city: 'Delhi' });
+        alert(form.file ? 'Bill and review submitted successfully! You just earned points and the Verified Patient badge!' : 'Review submitted successfully! It will appear once verified by moderators.');
       } else {
-        alert('Failed to submit review');
+        const errData = await res.json().catch(()=>({}));
+        alert(errData.error || 'Failed to submit review');
       }
     } catch {
       alert('Error submitting review');
@@ -253,9 +287,44 @@ export default function CommunityPage() {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex gap-3 text-sm text-blue-800">
-                <CheckCircle className="w-5 h-5 shrink-0 text-blue-500"/>
-                <p>Want a <strong>Verified Patient</strong> badge? To get the badge, you must <Link href="/upload" className="font-bold underline">Upload your Bill</Link> instead. Your review will be attached automatically.</p>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">Attach Bill (Optional - Earn +75 pts & Verified Patient badge)</label>
+                {!form.file ? (
+                  <div 
+                    onClick={() => fileRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Upload className="w-6 h-6 text-brand-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 font-medium">Click to upload bill image or PDF</p>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      ref={fileRef} 
+                      accept=".pdf,image/*"
+                      onChange={(e) => setForm({...form, file: e.target.files?.[0] || null})}
+                    />
+                  </div>
+                ) : (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-emerald-800">
+                        <CheckCircle className="w-5 h-5 shrink-0" />
+                        <span className="font-semibold text-sm truncate">{form.file.name}</span>
+                      </div>
+                      <button onClick={() => setForm({...form, file: null, totalCost: ''})} className="text-xs text-red-500 font-medium hover:underline">Remove</button>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-emerald-800 mb-1 block">Total Bill Amount *</label>
+                      <input 
+                        type="number" 
+                        value={form.totalCost} 
+                        onChange={e => setForm({...form, totalCost: e.target.value})} 
+                        className="input w-full text-sm py-1.5" 
+                        placeholder="e.g. 50000"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
