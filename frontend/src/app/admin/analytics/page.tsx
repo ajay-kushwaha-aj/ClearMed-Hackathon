@@ -378,7 +378,7 @@ export default function AdminAnalyticsPage() {
 
                         {selectedBill.fileUrl && (
                           <div>
-                            <a href={selectedBill.fileUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 bg-brand-50 p-3 rounded-xl justify-center font-medium transition-colors">
+                            <a href={selectedBill.fileUrl.startsWith('http') ? selectedBill.fileUrl : `${API.replace('/api', '')}${selectedBill.fileUrl.startsWith('/') ? '' : '/'}${selectedBill.fileUrl}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-brand-600 hover:text-brand-700 bg-brand-50 p-3 rounded-xl justify-center font-medium transition-colors">
                               <Eye className="w-4 h-4" /> View Original Document
                             </a>
                           </div>
