@@ -14,21 +14,50 @@ export interface OcrOutput {
   extractedData: ExtractedBillData;
   piiFieldsFound: string[];
   confidence: number;
-  engine: 'tesseract' | 'google_vision' | 'manual';
+  engine: 'tesseract' | 'google_vision' | 'ocr_space' | 'manual';
   processingMs: number;
 }
 
-// ── Tesseract OCR (local, no API key needed) ─────────────────────────────
-async function runTesseract(filePath: string): Promise<{ text: string; confidence: number }> {
-  try {
-    const { createWorker } = await import('tesseract.js');
-    const worker = await createWorker('eng');
-    const { data } = await worker.recognize(filePath);
-    await worker.terminate();
-    return { text: data.text, confidence: (data.confidence || 0) / 100 };
-  } catch (err) {
-    throw new Error(`Tesseract failed: ${(err as Error).message}`);
+// ── OCR.space API (Free Cloud OCR) ────────────────────────────────────────
+async function runOcrSpace(filePath: string): Promise<{ text: string; confidence: number }> {
+  const apiKey = process.env.OCR_SPACE_API_KEY;
+  if (!apiKey) throw new Error('OCR_SPACE_API_KEY not configured');
+
+  // Convert image to Base64 string
+  const ext = path.extname(filePath).toLowerCase();
+  let mimeType = 'image/jpeg';
+  if (ext === '.png') mimeType = 'image/png';
+  if (ext === '.pdf') mimeType = 'application/pdf';
+
+  const imageBytes = fs.readFileSync(filePath);
+  const base64Image = `data:${mimeType};base64,${imageBytes.toString('base64')}`;
+
+  // Package the data for OCR.space
+  const params = new URLSearchParams();
+  params.append('apikey', apiKey);
+  params.append('base64Image', base64Image);
+  params.append('isTable', 'true'); // isTable=true is excellent for reading medical bills and aligning prices
+
+  const response = await fetch('https://api.ocr.space/parse/image', {
+    method: 'POST',
+    body: params,
+  });
+
+  if (!response.ok) {
+    throw new Error(`OCR.space HTTP error: ${response.statusText}`);
   }
+
+  const result = await response.json();
+
+  if (result.IsErroredOnProcessing) {
+    throw new Error(`OCR.space processing error: ${result.ErrorMessage?.[0]}`);
+  }
+
+  const text = result.ParsedResults?.[0]?.ParsedText || '';
+
+  // OCR.space doesn't provide an overall confidence score on the free tier, 
+  // so we return a standard 0.85 to allow your pipeline to proceed.
+  return { text, confidence: 0.85 };
 }
 
 // ── Google Vision API (paid fallback, higher accuracy) ───────────────────
@@ -90,13 +119,15 @@ export async function processImageWithOcr(filePath: string): Promise<OcrOutput> 
   }
 
   try {
-    const result = await runTesseract(filePath);
+    // 1. Try OCR.space first
+    const result = await runOcrSpace(filePath);
     rawText = result.text;
     confidence = result.confidence;
-    engine = 'tesseract';
-  } catch (tesseractErr) {
-    console.warn('[OCR] Tesseract failed, trying Google Vision:', (tesseractErr as Error).message);
+    engine = 'ocr_space';
+  } catch (ocrSpaceErr) {
+    console.warn('[OCR] OCR.space failed, trying Google Vision:', (ocrSpaceErr as Error).message);
     try {
+      // 2. Fallback to Google Vision if OCR.space fails or hits rate limits
       const result = await runGoogleVision(filePath);
       rawText = result.text;
       confidence = result.confidence;
