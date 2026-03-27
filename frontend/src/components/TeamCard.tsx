@@ -42,21 +42,19 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
 
                 {/* Avatar */}
                 <div className="relative mb-5 z-10">
-                    <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:ring-teal-100 transition-all duration-500 relative bg-gray-50">
+                    <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:ring-teal-100 transition-all duration-500 bg-gray-50 flex items-center justify-center">
+                        {/* Initials fallback always behind */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-white select-none`}>
+                            {member.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
+                        </div>
                         <Image
                             src={member.image}
                             alt={member.name}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                            onError={(e) => {
-                                // Fallback to initials if image fails
-                                e.currentTarget.style.display = "none";
-                            }}
+                            width={112}
+                            height={112}
+                            unoptimized
+                            className="relative z-10 w-28 h-28 object-cover rounded-full group-hover:scale-110 transition-transform duration-700 ease-out"
                         />
-                        {/* Initials fallback layer */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-white -z-10`}>
-                            {member.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
-                        </div>
                     </div>
                     {/* Online indicator */}
                     <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-green-400 border-2 border-white shadow-sm" />
