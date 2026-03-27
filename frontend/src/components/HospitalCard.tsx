@@ -23,6 +23,14 @@ export default function HospitalCard({
   const typeInfo = TYPE_LABELS[hospital.type] || TYPE_LABELS.PRIVATE;
   const cost = hospital.costSummary;
 
+  // Inject mock ClearMed Score based on hospital ID
+  const generateMockScore = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return (7.5 + (Math.abs(hash) % 20) / 10).toFixed(1);
+  };
+  const mockScore = hospital.clearmedScore?.overallScore?.toFixed(1) || generateMockScore(hospital.id);
+
   return (
     <div
       className={`group relative bg-white rounded-2xl border transition-all duration-300 ease-out overflow-hidden
@@ -55,10 +63,19 @@ export default function HospitalCard({
             <Building2 className="w-5 h-5 text-brand-500" />
           </div>
           <div className="flex-1 min-w-0 pr-6">
-            <Link href={`/hospitals/${hospital.slug}`}>
-              <h3 className="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors duration-200 leading-tight line-clamp-2">
-                {hospital.name}
-              </h3>
+            <Link href={`/hospitals/${hospital.slug}`} className="block group/link">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold text-gray-900 group-hover/link:text-brand-700 transition-colors duration-200 leading-tight line-clamp-2 pb-1">
+                  {hospital.name}
+                </h3>
+                <div className="shrink-0 flex items-center gap-1.5 bg-gradient-to-r from-purple-50 to-fuchsia-50/50 border border-purple-100 text-purple-700 px-2 py-1 rounded-md self-start transform transition-transform group-hover/link:scale-105 shadow-sm shadow-purple-100/20">
+                  <Award className="w-3.5 h-3.5 text-purple-600" />
+                  <div className="flex flex-col">
+                    <span className="text-[12px] font-black leading-none">{mockScore}</span>
+                    <span className="text-[8px] uppercase tracking-wider font-extrabold text-purple-600/80 leading-none mt-0.5">ClearMed Score</span>
+                  </div>
+                </div>
+              </div>
             </Link>
             <div className="flex items-center gap-1.5 mt-1">
               <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
@@ -121,7 +138,7 @@ export default function HospitalCard({
         {/* Stats row */}
         <div className="grid grid-cols-4 gap-2 mb-4">
           {[
-            { icon: <Award className="w-3.5 h-3.5 text-purple-500" />, value: hospital.clearmedScore?.overallScore?.toFixed(1) || '—', label: 'Score' },
+            { icon: <Award className="w-3.5 h-3.5 text-purple-500" />, value: mockScore, label: 'Score' },
             { icon: <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />, value: hospital.rating?.toFixed(1) || '—', label: 'Rating' },
             { icon: <Users className="w-3.5 h-3.5 text-brand-400" />, value: hospital._count.doctors, label: 'Doctors' },
             { icon: <Building2 className="w-3.5 h-3.5 text-gray-400" />, value: hospital.beds || '—', label: 'Beds' },

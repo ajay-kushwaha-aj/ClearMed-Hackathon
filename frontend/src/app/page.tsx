@@ -61,7 +61,7 @@ export default function HomePage() {
           <div className="bg-white rounded-2xl p-3 sm:p-4 shadow-2xl max-w-3xl mx-auto">
             <SearchBar />
           </div>
-          
+
           <p className="mt-4 text-white/80 text-sm sm:text-base font-medium tracking-wide">
             Get cost insights, outcomes, and hospital recommendations in seconds.
           </p>
@@ -253,7 +253,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
             {[
-              { title: 'Platform', links: [{ label: 'Find Hospitals', href: '/search' }, { label: 'Symptom Analyzer', href: '/symptoms' }, { label: 'Report Analyzer', href: '/reports' }, { label: 'Cost Intelligence', href: '/dashboard' }, { label: 'Upload Bill', href: '/upload' }] },
+              { title: 'Platform', links: [{ label: 'Find Hospitals', href: '/search' }, { label: 'Symptom Analyzer', href: '/symptoms' }, { label: 'Report Analyzer', href: '/reports' }, { label: 'Cost Intelligence', href: '/dashboard' }, { label: 'Upload Bill', href: '/upload' }, { label: 'About Us', href: '/about' }] },
               { title: 'Insurance', links: [{ label: 'Cashless Hospitals', href: '/insurance' }, { label: 'Coverage Estimator', href: '/insurance' }, { label: 'Find Insurers', href: '/insurance' }] },
               { title: 'For Hospitals', links: [{ label: 'Partner Program', href: '/partner' }, { label: 'Pricing', href: '/pricing' }, { label: 'B2B Data API', href: '/b2b' }] },
               { title: 'Legal', links: [{ label: 'Privacy Policy', href: '/privacy' }, { label: 'Terms of Service', href: '/terms' }, { label: 'Contact', href: 'mailto:contact.raktsetu@gmail.com' }] },
@@ -276,9 +276,9 @@ export default function HomePage() {
             <p className="text-gray-500 text-sm">© 2026 ClearMed Health Technologies Pvt. Ltd.</p>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
               <p>
-                Built with 💻 by{' '}
+                Built with Care by{' '}
                 <a href="https://portfolio.raktport.in/" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 font-semibold transition-colors">
-                  Ajay Kushwaha
+                  Team ClearMed
                 </a>
               </p>
               <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-gray-700"></span>
