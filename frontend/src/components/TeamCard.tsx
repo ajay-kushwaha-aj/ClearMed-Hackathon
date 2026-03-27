@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+import { Linkedin, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 interface TeamMember {
@@ -12,123 +12,82 @@ interface TeamMember {
     linkedin: string;
 }
 
+const gradients = [
+    "from-brand-400/20 to-teal-400/20",
+    "from-purple-400/20 to-pink-400/20",
+    "from-amber-400/20 to-orange-400/20",
+    "from-teal-400/20 to-cyan-400/20",
+    "from-rose-400/20 to-brand-400/20",
+];
+
 const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
+    const grad = gradients[index % gradients.length];
+
     return (
         <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: index * 0.12 }}
-            whileHover={{ y: -8, scale: 1.02 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.55, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+            whileHover={{ y: -10, scale: 1.025 }}
             className="group relative"
         >
-            <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-br from-teal-500/15 to-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
+            {/* Glow halo */}
+            <div className={`absolute -inset-px rounded-2xl bg-gradient-to-br ${grad} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-lg`} />
 
-            <div className="relative bg-white border border-gray-100 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-500 overflow-hidden shadow-sm hover:shadow-lg hover:border-teal-100">
-                <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-teal-50 blur-2xl group-hover:bg-teal-100 transition-all duration-700" />
+            <div className="relative bg-white border border-gray-100 rounded-2xl p-7 flex flex-col items-center text-center transition-all duration-500 overflow-hidden shadow-sm hover:shadow-xl hover:border-transparent">
+                {/* Ambient background shape */}
+                <div className={`absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-to-br ${grad} blur-3xl opacity-50 group-hover:opacity-80 transition-all duration-700`} />
+                <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-gradient-to-tr from-gray-100 to-gray-50 blur-2xl" />
 
-                <div className="relative mb-5">
-                    <div className="w-28 h-28 rounded-full overflow-hidden ring-2 ring-teal-100 group-hover:ring-teal-300 transition-all duration-500 relative bg-gray-50">
+                {/* Avatar */}
+                <div className="relative mb-5 z-10">
+                    <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:ring-teal-100 transition-all duration-500 relative bg-gray-50">
                         <Image
                             src={member.image}
                             alt={member.name}
                             fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-700"
+                            className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                            onError={(e) => {
+                                // Fallback to initials if image fails
+                                e.currentTarget.style.display = "none";
+                            }}
                         />
+                        {/* Initials fallback layer */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-white -z-10`}>
+                            {member.name.split(" ").map(w => w[0]).slice(0, 2).join("")}
+                        </div>
                     </div>
+                    {/* Online indicator */}
+                    <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-green-400 border-2 border-white shadow-sm" />
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-700 transition-all duration-300">
-                    {member.name}
-                </h3>
+                <div className="relative z-10 flex flex-col items-center flex-1">
+                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-teal-700 transition-colors duration-300">
+                        {member.name}
+                    </h3>
 
-                <p className="text-brand-600 text-sm font-semibold mt-1 tracking-wide uppercase">
-                    {member.role}
-                </p>
+                    <span className={`mt-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-gradient-to-r ${grad} text-gray-700 shadow-sm`}>
+                        {member.role}
+                    </span>
 
-                <p className="text-gray-500 text-sm mt-3 leading-relaxed line-clamp-3">
-                    {member.bio}
-                </p>
+                    <p className="text-gray-500 text-sm mt-3 leading-relaxed line-clamp-3 flex-1">
+                        {member.bio}
+                    </p>
 
-                <motion.a
-                    href={member.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-teal-50 text-teal-700 text-sm font-medium hover:bg-teal-600 hover:text-white transition-all duration-300 shadow-sm"
-                >
-                    View Profile
-                    <ExternalLink className="w-3.5 h-3.5" />
-                </motion.a>
-            </div>
-        </motion.div>
-    );
-};
-
-export default TeamCard; "use client";
-
-import { motion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
-import Image from "next/image";
-
-interface TeamMember {
-    name: string;
-    role: string;
-    bio: string;
-    image: string;
-    linkedin: string;
-}
-
-const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: index * 0.12 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-            className="group relative"
-        >
-            <div className="absolute -inset-0.5 rounded-2xl bg-gradient-to-br from-teal-500/15 to-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
-
-            <div className="relative bg-white border border-gray-100 rounded-2xl p-6 flex flex-col items-center text-center transition-all duration-500 overflow-hidden shadow-sm hover:shadow-lg hover:border-teal-100">
-                <div className="absolute -top-16 -right-16 w-32 h-32 rounded-full bg-teal-50 blur-2xl group-hover:bg-teal-100 transition-all duration-700" />
-
-                <div className="relative mb-5">
-                    <div className="w-28 h-28 rounded-full overflow-hidden ring-2 ring-teal-100 group-hover:ring-teal-300 transition-all duration-500 relative bg-gray-50">
-                        <Image
-                            src={member.image}
-                            alt={member.name}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-700"
-                        />
-                    </div>
+                    <motion.a
+                        href={member.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#0077B5]/10 text-[#0077B5] text-sm font-semibold hover:bg-[#0077B5] hover:text-white transition-all duration-300 shadow-sm border border-[#0077B5]/20"
+                    >
+                        <Linkedin className="w-3.5 h-3.5" />
+                        Connect
+                        <ExternalLink className="w-3 h-3" />
+                    </motion.a>
                 </div>
-
-                <h3 className="text-xl font-bold text-gray-900 group-hover:text-teal-700 transition-all duration-300">
-                    {member.name}
-                </h3>
-
-                <p className="text-brand-600 text-sm font-semibold mt-1 tracking-wide uppercase">
-                    {member.role}
-                </p>
-
-                <p className="text-gray-500 text-sm mt-3 leading-relaxed line-clamp-3">
-                    {member.bio}
-                </p>
-
-                <motion.a
-                    href={member.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-teal-50 text-teal-700 text-sm font-medium hover:bg-teal-600 hover:text-white transition-all duration-300 shadow-sm"
-                >
-                    View Profile
-                    <ExternalLink className="w-3.5 h-3.5" />
-                </motion.a>
             </div>
         </motion.div>
     );

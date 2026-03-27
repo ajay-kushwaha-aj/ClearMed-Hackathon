@@ -3,6 +3,7 @@ import { Outfit } from 'next/font/google';
 import './globals.css';
 import CookieBanner from '@/components/CookieBanner';
 import PwaInstaller from '@/components/PwaInstaller';
+import Footer from '@/components/Footer';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body suppressHydrationWarning className={`${outfit.variable} font-sans bg-gray-50 text-gray-900 antialiased`}>
         {children}
+        <Footer />
         <CookieBanner />
         <PwaInstaller />
       </body>
