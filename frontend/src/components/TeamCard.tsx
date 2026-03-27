@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Linkedin, ExternalLink } from "lucide-react";
 import Image from "next/image";
@@ -22,6 +23,7 @@ const gradients = [
 
 const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
     const grad = gradients[index % gradients.length];
+    const [imageError, setImageError] = useState(false);
 
     return (
         <motion.div
@@ -40,24 +42,29 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
                 <div className={`absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-to-br ${grad} blur-3xl opacity-50 group-hover:opacity-80 transition-all duration-700`} />
                 <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-gradient-to-tr from-gray-100 to-gray-50 blur-2xl" />
 
-                {/* Avatar */}
+                {/* Avatar Wrapper */}
                 <div className="relative mb-5 z-10">
-                    <div className="w-28 h-28 rounded-full overflow-hidden ring-4 ring-white shadow-lg group-hover:ring-teal-100 transition-all duration-500 bg-gray-50 flex items-center justify-center">
+                    {/* Circle Image / Initials */}
+                    <div className="w-28 h-28 rounded-full overflow-hidden shadow-lg ring-4 ring-white group-hover:ring-teal-100 transition-all duration-500 bg-gray-50 flex items-center justify-center relative">
                         {/* Initials fallback always behind */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-white select-none`}>
+                        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-gray-800/60 select-none backdrop-blur-sm shadow-inner`}>
                             {member.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
                         </div>
-                        <Image
-                            src={member.image}
-                            alt={member.name}
-                            width={112}
-                            height={112}
-                            unoptimized
-                            className="relative z-10 w-28 h-28 object-cover rounded-full group-hover:scale-110 transition-transform duration-700 ease-out"
-                        />
+                        
+                        {!imageError && (
+                            <Image
+                                src={member.image}
+                                alt=""
+                                width={112}
+                                height={112}
+                                unoptimized
+                                className="relative z-10 w-28 h-28 object-cover rounded-full group-hover:scale-110 transition-transform duration-700 ease-out"
+                                onError={() => setImageError(true)}
+                            />
+                        )}
                     </div>
                     {/* Online indicator */}
-                    <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-green-400 border-2 border-white shadow-sm" />
+                    <div className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-green-400 border-2 border-white shadow-sm z-20" />
                 </div>
 
                 <div className="relative z-10 flex flex-col items-center flex-1">
