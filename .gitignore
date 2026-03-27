@@ -83,15 +83,16 @@ web_modules/
 
 # Next.js build output
 .next
-out
+/frontend/out
+/out
 
 # Nuxt.js build / generate output
 .nuxt
 dist
 
-# Gatsby files
+# Gatsby files (do NOT ignore frontend/public which contains real assets)
 .cache/
-public
+# public   <-- removed: this was accidentally ignoring frontend/public/
 
 # vuepress build output
 .vuepress/dist

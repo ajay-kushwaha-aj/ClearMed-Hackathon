@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Search, Shield, TrendingDown, ArrowRight, Upload, Stethoscope, Trophy, TrendingUp, BarChart3, MapPin, Building2, IndianRupee, Heart, FileText, Globe, FlaskConical } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
+import Footer from '@/components/Footer';
 
 const MOBILE_QUICK_LINKS = [
   { icon: '🔍', label: 'Find Hospitals', href: '/search', color: 'bg-brand-50 text-brand-700' },
@@ -248,46 +249,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 py-10 px-4 pb-24 lg:pb-10">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-10">
-            {[
-              { title: 'Platform', links: [{ label: 'Find Hospitals', href: '/search' }, { label: 'Symptom Analyzer', href: '/symptoms' }, { label: 'Report Analyzer', href: '/reports' }, { label: 'Cost Intelligence', href: '/dashboard' }, { label: 'Upload Bill', href: '/upload' }, { label: 'About Us', href: '/about' }] },
-              { title: 'Insurance', links: [{ label: 'Cashless Hospitals', href: '/insurance' }, { label: 'Coverage Estimator', href: '/insurance' }, { label: 'Find Insurers', href: '/insurance' }] },
-              { title: 'For Hospitals', links: [{ label: 'Partner Program', href: '/partner' }, { label: 'Pricing', href: '/pricing' }, { label: 'B2B Data API', href: '/b2b' }] },
-              { title: 'Legal', links: [{ label: 'Privacy Policy', href: '/privacy' }, { label: 'Terms of Service', href: '/terms' }, { label: 'Contact', href: 'mailto:contact.raktsetu@gmail.com' }] },
-            ].map(col => (
-              <div key={col.title}>
-                <p className="text-gray-400 text-sm font-semibold uppercase tracking-wider mb-4">{col.title}</p>
-                <div className="space-y-3">
-                  {col.links.map(l => (
-                    <Link key={l.label} href={l.href} className="block text-gray-500 hover:text-gray-300 text-sm transition-colors">{l.label}</Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="border-t border-gray-800 pt-6 flex flex-col items-center gap-4 text-center">
-            <div className="mb-2">
-              <h3 className="text-2xl font-bold text-white">Clear<span className="text-teal-400">Med</span></h3>
-              <p className="text-brand-300 font-medium text-sm mt-1 tracking-wide">Smarter Choices. Better Care.</p>
-            </div>
-            <p className="text-gray-500 text-sm">© 2026 ClearMed Health Technologies Pvt. Ltd.</p>
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-400">
-              <p>
-                Built with Care by{' '}
-                <a href="https://portfolio.raktport.in/" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:text-brand-300 font-semibold transition-colors">
-                  Team ClearMed
-                </a>
-              </p>
-              <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-gray-700"></span>
-              <p>Made with <span className="text-red-400 text-base">❤️</span> for India 🇮🇳</p>
-            </div>
-            <p className="text-gray-600 text-xs mt-1 max-w-3xl">Medical disclaimer: ClearMed does not provide medical diagnosis or advice. Always consult a qualified doctor.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
