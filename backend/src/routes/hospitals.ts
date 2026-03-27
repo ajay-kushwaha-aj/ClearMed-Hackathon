@@ -27,7 +27,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // >> PERFORMANCE OPTIMIZATION 1: Two-Step Lookup <<
     // Resolve the Treatment ID first so we don't have to use slow text-matching on large joined tables.
     let targetTreatmentId: string | undefined;
-    let fallbackDepartment: string | undefined;
+    let fallbackDeptTerms: string[] = [];
 
     if (params.treatment) {
       const foundTreatment = await prisma.treatment.findFirst({
@@ -52,9 +52,22 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       });
 
       // If no hospitals have this treatment mapped, fallback to department-based search
-      // using the treatment's category (e.g., "Gynaecology") and specialization (e.g., "Gynaecologist")
+      // Collect all relevant search terms from treatment's category and specialization
       if (mappedCount === 0) {
-        fallbackDepartment = foundTreatment.category || foundTreatment.specialization || undefined;
+        const terms = new Set<string>();
+        if (foundTreatment.category) terms.add(foundTreatment.category);          // e.g. "Gynaecology"
+        if (foundTreatment.specialization) terms.add(foundTreatment.specialization); // e.g. "Gynaecologist"
+        // Also add common variations
+        if (foundTreatment.category) {
+          const cat = foundTreatment.category;
+          // Add "Obstetrics" prefix variant for Gynaecology
+          if (cat.toLowerCase().includes('gynaecol') || cat.toLowerCase().includes('gynecol')) {
+            terms.add('Obstetrics');
+            terms.add('Gynecology');
+            terms.add('Gynaecology');
+          }
+        }
+        fallbackDeptTerms = [...terms];
         targetTreatmentId = undefined; // Clear treatment ID so we use department instead
       }
     }
@@ -85,16 +98,39 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    // Department filter — either explicit or from treatment category fallback
-    const deptSearch = params.department || fallbackDepartment;
-    if (deptSearch) {
-      specialtyFilters.push({
-        doctors: {
-          some: {
-            specialization: { contains: deptSearch, mode: 'insensitive' }
+    // Department filter — either explicit param or from treatment category fallback
+    const deptTerms = params.department ? [params.department] : fallbackDeptTerms;
+    if (deptTerms.length > 0) {
+      // Search doctors with ANY of the department terms
+      for (const term of deptTerms) {
+        specialtyFilters.push({
+          doctors: {
+            some: {
+              specialization: { contains: term, mode: 'insensitive' }
+            }
           }
+        });
+      }
+
+      // Also search the departments JSON field using raw SQL
+      // Cast JSON to text and use ILIKE for substring matching
+      // This catches hospitals that have the department listed but no matching doctors
+      try {
+        const likeClauses = deptTerms.map((_t: string, i: number) => `departments::text ILIKE $${i + 1}`).join(' OR ');
+        const likeParams = deptTerms.map((t: string) => `%${t}%`);
+        const deptHospitals: { id: string }[] = await prisma.$queryRawUnsafe(
+          `SELECT id FROM hospitals WHERE departments IS NOT NULL AND (${likeClauses})`,
+          ...likeParams
+        );
+        if (deptHospitals.length > 0) {
+          specialtyFilters.push({
+            id: { in: deptHospitals.map(h => h.id) }
+          });
         }
-      });
+      } catch (e) {
+        // If raw query fails, continue with doctor-based search only
+        console.warn('Departments JSON search failed:', e);
+      }
     }
 
     if (specialtyFilters.length > 0) {

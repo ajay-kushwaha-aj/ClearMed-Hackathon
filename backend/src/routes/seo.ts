@@ -45,8 +45,8 @@ router.get('/treatment/:slug', async (req: Request, res: Response, next: NextFun
       })
     );
 
-    // Top hospitals
-    const topHospitals = await prisma.hospitalTreatment.findMany({
+    // Top hospitals — try direct treatment mapping first
+    let topHospitals = await prisma.hospitalTreatment.findMany({
       where: { treatmentId: treatment.id, avgCostEstimate: { gt: 0 } },
       include: {
         hospital: { select: { id: true, name: true, slug: true, city: true, type: true, naabhStatus: true, rating: true } },
@@ -55,7 +55,66 @@ router.get('/treatment/:slug', async (req: Request, res: Response, next: NextFun
       take: 8,
     });
 
-    const totalHospitals = await prisma.hospitalTreatment.count({ where: { treatmentId: treatment.id } });
+    let totalHospitals = await prisma.hospitalTreatment.count({ where: { treatmentId: treatment.id } });
+
+    // Fallback: if no hospitals are mapped for this treatment, find hospitals by department
+    if (topHospitals.length === 0) {
+      const deptTerms: string[] = [];
+      if (treatment.category) deptTerms.push(treatment.category);
+      if (treatment.specialization) deptTerms.push(treatment.specialization);
+      // Add variations for gynaecology
+      if (treatment.category && (treatment.category.toLowerCase().includes('gynaecol') || treatment.category.toLowerCase().includes('gynecol'))) {
+        deptTerms.push('Obstetrics', 'Gynecology', 'Gynaecology');
+      }
+
+      if (deptTerms.length > 0) {
+        // Search hospitals by departments JSON and doctor specialization
+        const doctorFilters = deptTerms.map(term => ({
+          doctors: { some: { specialization: { contains: term, mode: 'insensitive' as const } } }
+        }));
+
+        // Also find hospital IDs from departments JSON via raw SQL
+        let deptHospitalIds: string[] = [];
+        try {
+          const likeClauses = deptTerms.map((_t: string, i: number) => `departments::text ILIKE $${i + 1}`).join(' OR ');
+          const likeParams = deptTerms.map((t: string) => `%${t}%`);
+          const deptResults: { id: string }[] = await prisma.$queryRawUnsafe(
+            `SELECT id FROM hospitals WHERE departments IS NOT NULL AND (${likeClauses})`,
+            ...likeParams
+          );
+          deptHospitalIds = deptResults.map(h => h.id);
+        } catch (e) {
+          console.warn('Departments JSON search failed in SEO:', e);
+        }
+
+        const fallbackHospitals = await prisma.hospital.findMany({
+          where: {
+            OR: [
+              ...doctorFilters,
+              ...(deptHospitalIds.length > 0 ? [{ id: { in: deptHospitalIds } }] : []),
+            ]
+          },
+          select: { id: true, name: true, slug: true, city: true, type: true, naabhStatus: true, rating: true },
+          orderBy: { rating: 'desc' },
+          take: 8,
+        });
+
+        // Wrap into the same shape as hospitalTreatment results
+        topHospitals = fallbackHospitals.map(h => ({
+          id: '',
+          hospitalId: h.id,
+          treatmentId: treatment.id,
+          avgCostEstimate: null,
+          minCostEstimate: null,
+          maxCostEstimate: null,
+          costBreakdown: null,
+          isAvailable: true,
+          createdAt: new Date(),
+          hospital: h,
+        })) as any;
+        totalHospitals = fallbackHospitals.length;
+      }
+    }
 
     // Generate SEO metadata
     const validCities = costByCity.filter(Boolean) as Array<{ city: string; avg: number; min: number; max: number; count: number }>;

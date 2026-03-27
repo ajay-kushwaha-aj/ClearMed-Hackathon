@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { href: '/insurance', icon: <Shield className="w-4 h-4" />, label: 'Insurance' },
   { href: '/dashboard', icon: <TrendingUp className="w-4 h-4" />, label: 'Cost Trends' },
   { href: '/community', icon: <Users className="w-4 h-4" />, label: 'Reviews' },
-  { href: '/admin/analytics', icon: <Shield className="w-4 h-4" />, label: 'Admin' },
 ];
 
 const MOBILE_NAV = [
@@ -162,7 +161,6 @@ export default function Navbar({ transparent = false }: { transparent?: boolean 
               { href: '/partner', icon: <Building2 className="w-4 h-4" />, label: 'Partner Program' },
               { href: '/pricing', icon: <IndianRupee className="w-4 h-4" />, label: 'Pricing' },
               { href: '/upload', icon: <Upload className="w-4 h-4" />, label: 'Upload Bill' },
-              { href: '/admin/analytics', icon: <LayoutDashboard className="w-4 h-4" />, label: 'Admin' },
               ].map(item => (
                 <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${isActive(item.href) ? 'bg-brand-50 text-brand-700' : 'text-gray-700 hover:bg-gray-50'}`}>
