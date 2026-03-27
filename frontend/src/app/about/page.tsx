@@ -260,7 +260,7 @@ export default function AboutPage() {
                             </div>
                             <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Meet the builders</h2>
                             <p className="text-gray-500 mt-3 max-w-xl mx-auto">
-                                Five students from VIT Bhopal with one mission — making healthcare costs transparent for every Indian.
+                                Five students from University of Delhi with one mission — making healthcare costs transparent for every Indian.
                             </p>
                         </motion.div>
 

@@ -24,25 +24,43 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const params = schema.parse(req.query);
     const skip = (params.page - 1) * params.limit;
 
+    // >> PERFORMANCE OPTIMIZATION 1: Two-Step Lookup <<
+    // Resolve the Treatment ID first so we don't have to use slow text-matching on large joined tables.
+    let targetTreatmentId: string | undefined;
+
+    if (params.treatment) {
+      const foundTreatment = await prisma.treatment.findFirst({
+        where: {
+          OR: [
+            { slug: params.treatment },
+            { name: { contains: params.treatment, mode: 'insensitive' } }
+          ]
+        }
+      });
+
+      if (!foundTreatment) {
+        // If the treatment doesn't exist, don't even bother querying the database. Return empty instantly.
+        res.json({ data: [], meta: { total: 0, page: params.page, limit: params.limit, totalPages: 0 } });
+        return;
+      }
+      targetTreatmentId = foundTreatment.id;
+    }
+
     const where: Record<string, unknown> = {};
     if (params.city) where.city = { contains: params.city, mode: 'insensitive' };
     if (params.type) where.type = params.type;
     if (params.nabh !== undefined) where.naabhStatus = params.nabh === 'true';
     if (params.search) where.name = { contains: params.search, mode: 'insensitive' };
 
-    // Filter by treatment, department & cost
     const specialtyFilters: any[] = [];
-    if (params.treatment) {
+
+    // Now we filter using the exact ID (which is indexed and extremely fast)
+    if (targetTreatmentId) {
       specialtyFilters.push({
         hospitalTreatments: {
           some: {
             isAvailable: true,
-            treatment: {
-              OR: [
-                { slug: params.treatment },
-                { name: { contains: params.treatment, mode: 'insensitive' } },
-              ]
-            },
+            treatmentId: targetTreatmentId,
             ...(params.minCost || params.maxCost ? {
               avgCostEstimate: {
                 ...(params.minCost ? { gte: params.minCost } : {}),
@@ -71,8 +89,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const orderBy: Record<string, unknown>[] = params.sort === 'rating'
       ? [{ rating: 'desc' }]
       : params.sort === 'name'
-      ? [{ name: 'asc' }]
-      : [{ rating: 'desc' }]; // cost sort handled post-query
+        ? [{ name: 'asc' }]
+        : [{ rating: 'desc' }];
 
     const [hospitals, total] = await Promise.all([
       prisma.hospital.findMany({
@@ -80,14 +98,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         include: {
           hospitalTreatments: {
             include: { treatment: true },
-            where: params.treatment ? {
+            // Fast indexed lookup instead of slow string matching
+            where: targetTreatmentId ? {
               isAvailable: true,
-              treatment: {
-                OR: [
-                  { slug: params.treatment },
-                  { name: { contains: params.treatment, mode: 'insensitive' } },
-                ]
-              }
+              treatmentId: targetTreatmentId
             } : { isAvailable: true },
             take: 5,
           },
@@ -107,20 +121,16 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       prisma.hospital.count({ where }),
     ]);
 
-    // Enrich with bill-derived cost data
+    // >> PERFORMANCE OPTIMIZATION 2: Fix N+1 Query Issue <<
     const enriched = await Promise.all(hospitals.map(async (h) => {
       let costData = null;
-      if (params.treatment) {
+      if (targetTreatmentId) {
         const costs = await prisma.bill.aggregate({
           where: {
             hospitalId: h.id,
             status: 'BILL_VERIFIED',
-            treatment: {
-              OR: [
-                { slug: params.treatment },
-                { name: { contains: params.treatment, mode: 'insensitive' } }
-              ]
-            }
+            // Fast indexed lookup here too!
+            treatmentId: targetTreatmentId
           },
           _avg: { totalCost: true },
           _min: { totalCost: true },
@@ -205,7 +215,6 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
       return;
     }
 
-    // Get cost breakdown from verified bills
     const billStats = await prisma.bill.groupBy({
       by: ['treatmentId'],
       where: { hospitalId: hospital.id, status: 'BILL_VERIFIED' },

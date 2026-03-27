@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Linkedin, ExternalLink } from "lucide-react";
-import Image from "next/image";
 
 interface TeamMember {
     name: string;
@@ -46,19 +45,24 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
                 <div className="relative mb-5 z-10">
                     {/* Circle Image / Initials */}
                     <div className="w-28 h-28 rounded-full overflow-hidden shadow-lg ring-4 ring-white group-hover:ring-teal-100 transition-all duration-500 bg-gray-50 flex items-center justify-center relative">
-                        {/* Initials fallback always behind */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-gray-800/60 select-none backdrop-blur-sm shadow-inner`}>
-                            {member.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
-                        </div>
-                        
+                        {/* Initials fallback - shown when image fails */}
+                        {imageError && (
+                            <div className={`absolute inset-0 bg-gradient-to-br ${grad} flex items-center justify-center text-2xl font-black text-gray-800/60 select-none`}>
+                                {member.name.split(" ").map((w: string) => w[0]).slice(0, 2).join("")}
+                            </div>
+                        )}
+
                         {!imageError && (
                             <img
                                 src={member.image}
                                 alt={member.name}
-                                className="relative z-10 w-28 h-28 object-cover rounded-full group-hover:scale-110 transition-transform duration-700 ease-out"
-                                onError={(e) => {
-                                    console.error("Image failed to load:", member.image);
+                                className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-700 ease-out"
+                                onError={() => {
                                     setImageError(true);
+                                }}
+                                onLoad={(e) => {
+                                    const img = e.currentTarget;
+                                    if (img.naturalWidth === 0) setImageError(true);
                                 }}
                             />
                         )}
