@@ -91,7 +91,7 @@ export default function PwaInstaller() {
           <Smartphone className="w-6 h-6 text-white shrink-0" />
           <div className="flex-1">
             <p className="text-white font-semibold text-sm">Add ClearMed to Home Screen</p>
-            <p className="text-white/70 text-xs">Faster access + offline support</p>
+            <p className="text-white/70 text-xs">Faster access + seamless experience</p>
           </div>
           <button onClick={dismiss} className="text-white/60 hover:text-white p-1">
             <X className="w-4 h-4" />
@@ -115,7 +115,7 @@ export default function PwaInstaller() {
               </div>
             )}
           </div>
-          <p className="text-xs text-gray-400 text-center">Works offline · No app store needed</p>
+          <p className="text-xs text-gray-400 text-center">No app store needed</p>
         </div>
       </div>
     </div>

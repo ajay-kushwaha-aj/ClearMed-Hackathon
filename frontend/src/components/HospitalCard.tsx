@@ -119,8 +119,9 @@ export default function HospitalCard({
         )}
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {[
+            { icon: <Award className="w-3.5 h-3.5 text-purple-500" />, value: hospital.clearmedScore?.overallScore?.toFixed(1) || '—', label: 'Score' },
             { icon: <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />, value: hospital.rating?.toFixed(1) || '—', label: 'Rating' },
             { icon: <Users className="w-3.5 h-3.5 text-brand-400" />, value: hospital._count.doctors, label: 'Doctors' },
             { icon: <Building2 className="w-3.5 h-3.5 text-gray-400" />, value: hospital.beds || '—', label: 'Beds' },
