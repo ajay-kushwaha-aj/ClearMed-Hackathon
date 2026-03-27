@@ -237,6 +237,7 @@ model Doctor {
 
   hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
 
+  @@index([hospitalId])
   @@map("doctors")
 }
 
@@ -270,6 +271,8 @@ model Bill {
   user      User?     @relation(fields: [uploadedBy], references: [id])
   ocrResult OcrResult?
 
+  @@index([hospitalId])
+  @@index([treatmentId])
   @@map("bills")
 }
 
@@ -295,6 +298,8 @@ model PatientFeedback {
   treatment Treatment @relation(fields: [treatmentId], references: [id])
   user      User?     @relation(fields: [userId], references: [id])
 
+  @@index([hospitalId])
+  @@index([treatmentId])
   @@map("patient_feedback")
 }
 

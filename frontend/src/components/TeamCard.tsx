@@ -52,14 +52,14 @@ const TeamCard = ({ member, index }: { member: TeamMember; index: number }) => {
                         </div>
                         
                         {!imageError && (
-                            <Image
+                            <img
                                 src={member.image}
-                                alt=""
-                                width={112}
-                                height={112}
-                                unoptimized
+                                alt={member.name}
                                 className="relative z-10 w-28 h-28 object-cover rounded-full group-hover:scale-110 transition-transform duration-700 ease-out"
-                                onError={() => setImageError(true)}
+                                onError={(e) => {
+                                    console.error("Image failed to load:", member.image);
+                                    setImageError(true);
+                                }}
                             />
                         )}
                     </div>

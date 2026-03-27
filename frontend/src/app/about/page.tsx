@@ -10,7 +10,7 @@ import { useRef } from "react";
 const team = [
     {
         name: "Ajay Kushwaha",
-        role: "Biomedical Sciences",
+        role: "Biomedical Science",
         bio: "Passionate about building scalable healthcare platforms. Leads the technical architecture and ensures seamless user experiences.",
         image: "/team/member1.png",
         linkedin: "https://www.linkedin.com/in/ajay-kushwaha-aj",
@@ -24,14 +24,14 @@ const team = [
     },
     {
         name: "Bisman Kaur",
-        role: "Biomedical Sciences",
+        role: "Biomedical Science",
         bio: "Architects robust APIs and database systems. Ensures data privacy and HIPAA-compliant infrastructure.",
         image: "/team/member3.png",
         linkedin: "https://www.linkedin.com/in/bisman-kaur-90177927b",
     },
     {
         name: "Sudipta Paul",
-        role: "Biomedical Sciences",
+        role: "Biomedical Science",
         bio: "Crafts intuitive interfaces that make healthcare data accessible. Advocates for patient-first design thinking.",
         image: "/team/member4.png",
         linkedin: "https://www.linkedin.com/in/sudipta-paul-ba9273318",
