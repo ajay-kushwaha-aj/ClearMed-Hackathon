@@ -27,6 +27,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     // >> PERFORMANCE OPTIMIZATION 1: Two-Step Lookup <<
     // Resolve the Treatment ID first so we don't have to use slow text-matching on large joined tables.
     let targetTreatmentId: string | undefined;
+    let fallbackDepartment: string | undefined;
 
     if (params.treatment) {
       const foundTreatment = await prisma.treatment.findFirst({
@@ -44,6 +45,18 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         return;
       }
       targetTreatmentId = foundTreatment.id;
+
+      // Check if any hospitals actually have this treatment mapped
+      const mappedCount = await prisma.hospitalTreatment.count({
+        where: { treatmentId: foundTreatment.id, isAvailable: true }
+      });
+
+      // If no hospitals have this treatment mapped, fallback to department-based search
+      // using the treatment's category (e.g., "Gynaecology") and specialization (e.g., "Gynaecologist")
+      if (mappedCount === 0) {
+        fallbackDepartment = foundTreatment.category || foundTreatment.specialization || undefined;
+        targetTreatmentId = undefined; // Clear treatment ID so we use department instead
+      }
     }
 
     const where: Record<string, unknown> = {};
@@ -72,11 +85,13 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    if (params.department) {
+    // Department filter — either explicit or from treatment category fallback
+    const deptSearch = params.department || fallbackDepartment;
+    if (deptSearch) {
       specialtyFilters.push({
         doctors: {
           some: {
-            specialization: { contains: params.department, mode: 'insensitive' }
+            specialization: { contains: deptSearch, mode: 'insensitive' }
           }
         }
       });

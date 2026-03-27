@@ -4,7 +4,6 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Users, Sparkles, Heart, Target, Lightbulb, Shield } from "lucide-react";
 import TeamCard from "@/components/TeamCard";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { useRef } from "react";
 
 const team = [
@@ -313,8 +312,6 @@ export default function AboutPage() {
                     </div>
                 </section>
             </main>
-
-            <Footer />
         </div>
     );
 }

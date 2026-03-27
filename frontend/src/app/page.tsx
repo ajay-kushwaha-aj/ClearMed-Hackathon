@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Search, Shield, TrendingDown, ArrowRight, Upload, Stethoscope, Trophy, TrendingUp, BarChart3, MapPin, Building2, IndianRupee, Heart, FileText, Globe, FlaskConical } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import SearchBar from '@/components/SearchBar';
-import Footer from '@/components/Footer';
 
 const MOBILE_QUICK_LINKS = [
   { icon: '🔍', label: 'Find Hospitals', href: '/search', color: 'bg-brand-50 text-brand-700' },
@@ -249,7 +248,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <Footer />
     </div>
   );
 }

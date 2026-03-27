@@ -208,14 +208,14 @@ export default function Footer() {
             <p>© {new Date().getFullYear()} ClearMed Health Technologies Pvt. Ltd.</p>
 
             <div className="flex items-center gap-1.5">
-              <span>Built with care by</span>
+              <span>Built by</span>
               <a
                 href="https://www.linkedin.com/in/ajay-kushwaha-aj"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-400 hover:text-brand-300 font-semibold transition-colors duration-200"
               >
-                Team ClearMed
+                Ajay Kushwaha
               </a>
               <span className="mx-1 text-gray-700">•</span>
               <span>Made with</span>
